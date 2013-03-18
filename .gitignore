@@ -1,0 +1,6 @@
+src/*.tar.xz
+src/*.tar.bz2
+src/*.tar.gz
+*~
+root
+export
