@@ -76,7 +76,7 @@ pango_extra_args:=--with-included-modules=arabic-lang,basic-fc,indic-lang
 pango: src/pango-1.33.8.tar.xz
 	$(call build_tarball,$<,$(pango_extra_args))
 
-gdk_pixbuf_extra_args:=--with-included-loaders=png,jpeg
+gdk_pixbuf_extra_args:=--with-included-loaders=png,jpeg --enable-gio-sniffing=no
 gdk-pixbuf: src/gdk-pixbuf-2.27.2.tar.xz
 	$(call build_tarball,$<,$(gdk_pixbuf_extra_args))
 
