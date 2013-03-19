@@ -95,7 +95,7 @@ create-export:
 	cp -r root/etc root/lib root/share export
 	cp root/bin/broadwayd root/bin/gtk3-demo root/bin/gtk3-demo-application export/bin
 	rm -rf export/share/aclocal  export/share/doc export/share/gir-1.0 export/share/gtk-doc export/share/locale export/share/man
-	rm -rf export/lib/*.a export/lib/*.la
+	rm -rf export/lib/*.a export/lib/*.la export/lib/gdk-pixbuf-2.0/2.10.0/loaders/*.a export/lib/gdk-pixbuf-2.0/2.10.0/loaders/*.la
 	rm -rf export/lib/*/*.a export/lib/pkgconfig  export/lib/gobject-introspection
 	rm -rf export/share/icons/HighContrast
 	strip export/lib/*.so*
