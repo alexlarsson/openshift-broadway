@@ -1,4 +1,4 @@
-export BROADWAY_ROOT=$OPENSHIFT_HOMEDIR/app-root/repo/export
+export BROADWAY_ROOT=$(pwd)/export
 export LD_LIBRARY_PATH=$BROADWAY_ROOT/lib
 export PATH=$BROADWAY_ROOT/bin:$PATH
 export XDG_CONFIG_DIRS="$BROADWAY_ROOT/etc/xdg:/etc"

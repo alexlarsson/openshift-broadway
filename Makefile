@@ -24,27 +24,38 @@ src/% : src/%.url
 build_tarball =					\
 	(					\
 	mkdir -p $(PREFIX) &&			\
-	tar xf $(1) &&				\
+	mkdir -p build &&			\
+	cd build &&				\
+	rm -rf $(basename $(basename $(notdir $(1)))) && \
+	tar xf ../$(1) &&				\
         cd $(basename $(basename $(notdir $(1)))) &&				\
-	if test "x$(3)" != "x"; then patch -p1 < ../$(3); fi && \
+	if test "x$(3)" != "x"; then patch -p1 < ../../$(3); fi && \
 	./configure --prefix=${PREFIX} $(2) &&	\
 	make -j4 V=1 &&				\
-	make install				\
+	make install $(4) 			\
 	)
 
 
 
-all: modules create-export
+all: create-root create-export
 	echo DONE
 
-modules: glib fontconfig pixman cairo gobject-introspection atk harfbuzz pango gdk-pixbuf gtk+ librsvg
+empty-root: 
+	rm -rf root
+	mkdir root
+
+create-root: empty-root modules
+	true;
+
+modules: glib fontconfig pixman cairo gobject-introspection atk harfbuzz pango gdk-pixbuf gtk+ librsvg gnome-themes-standard
 	true
 
 glib: src/glib-2.35.8.tar.xz
 	$(call build_tarball,$<,)
 
 fontconfig: src/fontconfig-2.10.91.tar.bz2
-	$(call build_tarball,$<,)
+#	We need DESTDIR to work around an issue with failing fc-cache
+	$(call build_tarball,$<,,,DESTDIR=/)
 
 pixman: src/pixman-0.28.2.tar.gz
 	$(call build_tarball,$<,)
@@ -61,11 +72,13 @@ atk: src/atk-2.7.91.tar.xz
 harfbuzz: src/harfbuzz-0.9.13.tar.bz2
 	$(call build_tarball,$<,)
 
+pango_extra_args:=--with-included-modules=arabic-lang,basic-fc,indic-lang
 pango: src/pango-1.33.8.tar.xz
-	$(call build_tarball,$<,--with-included-modules=arabic-lang,basic-fc,indic-lang)
+	$(call build_tarball,$<,$(pango_extra_args))
 
+gdk_pixbuf_extra_args:=--with-included-loaders=png,jpeg
 gdk-pixbuf: src/gdk-pixbuf-2.27.2.tar.xz
-	$(call build_tarball,$<,--with-included-loaders=png,jpeg)
+	$(call build_tarball,$<,$(gdk_pixbuf_extra_args))
 
 gtk+: src/gtk+-3.7.12.tar.xz
 	$(call build_tarball,$<,--enable-broadway-backend,gtk.patch)
@@ -84,9 +97,9 @@ create-export:
 	rm -rf export/share/aclocal  export/share/doc export/share/gir-1.0 export/share/gtk-doc export/share/locale export/share/man
 	rm -rf export/lib/*.a export/lib/*.la
 	rm -rf export/lib/*/*.a export/lib/pkgconfig  export/lib/gobject-introspection
+	rm -rf export/share/icons/HighContrast
 	strip export/lib/*.so*
 	strip export/bin/*
-	cp runtime.sh export
 	cp fonts.conf export/etc/fonts/
 	mkdir -p export/etc/xdg/gtk-3.0
 	cp settings.ini export/etc/xdg/gtk-3.0/
