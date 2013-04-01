@@ -1,78 +1,1236 @@
+diff --git a/gdk/broadway/Makefile.in b/gdk/broadway/Makefile.in
+index a062240..dd4b189 100644
+--- a/gdk/broadway/Makefile.in
++++ b/gdk/broadway/Makefile.in
+@@ -548,7 +548,7 @@
+ 	broadway-output.h		\
+ 	broadway-output.c
+ 
+-broadwayd_LDADD = $(GDK_DEP_LIBS) -lrt
++broadwayd_LDADD = $(GDK_DEP_LIBS) -lrt -lcrypt
+ MAINTAINERCLEANFILES = $(broadway_built_sources)
+ BUILT_SOURCES = $(broadway_built_sources)
+ all: $(BUILT_SOURCES)
+diff /dev/null b/gdk/broadway/toarray.pl -u
+--- /dev/null	2013-02-28 13:53:59.652271359 +0100
++++ b/gdk/broadway/toarray.pl	2012-01-26 17:11:22.271490799 +0100
+@@ -0,0 +1,15 @@
++#!/usr/bin/perl -w
++
++my $FILENAME = $ARGV[0];
++
++open FILE, $FILENAME or die "Cannot open $FILENAME";
++
++my $ARRAYNAME = $ARGV[1];
++print "static const char $ARRAYNAME\[\] =";
++while (<FILE>) {
++    s@\\@\\\\@g;
++    s@"@\\"@g;
++    chomp ($_);
++    print "\n  \"$_\\n\"";
++}
++print ";\n";
+diff --git a/gdk/broadway/broadway-output.c b/gdk/broadway/broadway-output.c
+index 3e1fb1e..774cca3 100644
+--- a/gdk/broadway/broadway-output.c
++++ b/gdk/broadway/broadway-output.c
+@@ -317,6 +317,13 @@ broadway_output_get_next_serial (BroadwayOutput *output)
+   return output->serial;
+ }
+ 
++void
++broadway_output_set_next_serial (BroadwayOutput *output,
++				 guint32 serial)
++{
++  output->serial = serial;
++}
++
+ 
+ /************************************************************************
+  *                     Core rendering operations                        *
+@@ -472,6 +479,24 @@ broadway_output_new_surface(BroadwayOutput *output,
+ }
+ 
+ void
++broadway_output_request_auth (BroadwayOutput *output)
++{
++  write_header (output, BROADWAY_OP_REQUEST_AUTH);
++}
++
++void
++broadway_output_auth_ok (BroadwayOutput *output)
++{
++  write_header (output, BROADWAY_OP_AUTH_OK);
++}
++
++void
++broadway_output_disconnected (BroadwayOutput *output)
++{
++  write_header (output, BROADWAY_OP_DISCONNECTED);
++}
++
++void
+ broadway_output_show_surface(BroadwayOutput *output,  int id)
+ {
+   write_header (output, BROADWAY_OP_SHOW_SURFACE);
+diff --git a/gdk/broadway/broadway-output.h b/gdk/broadway/broadway-output.h
+index 02436f4..ea57c7e 100644
+--- a/gdk/broadway/broadway-output.h
++++ b/gdk/broadway/broadway-output.h
+@@ -23,6 +23,8 @@ BroadwayOutput *broadway_output_new             (GOutputStream  *out,
+ void            broadway_output_free            (BroadwayOutput *output);
+ int             broadway_output_flush           (BroadwayOutput *output);
+ int             broadway_output_has_error       (BroadwayOutput *output);
++void            broadway_output_set_next_serial (BroadwayOutput *output,
++						 guint32         serial);
+ guint32         broadway_output_get_next_serial (BroadwayOutput *output);
+ void            broadway_output_new_surface     (BroadwayOutput *output,
+ 						 int             id,
+@@ -31,6 +33,9 @@ void            broadway_output_new_surface     (BroadwayOutput *output,
+ 						 int             w,
+ 						 int             h,
+ 						 gboolean        is_temp);
++void            broadway_output_request_auth    (BroadwayOutput *output);
++void            broadway_output_auth_ok         (BroadwayOutput *output);
++void            broadway_output_disconnected    (BroadwayOutput *output);
+ void            broadway_output_show_surface    (BroadwayOutput *output,
+ 						 int             id);
+ void            broadway_output_hide_surface    (BroadwayOutput *output,
 diff --git a/gdk/broadway/broadway-protocol.h b/gdk/broadway/broadway-protocol.h
-index a343617..c098fdf 100644
+index c098fdf..fe7a8a4 100644
 --- a/gdk/broadway/broadway-protocol.h
 +++ b/gdk/broadway/broadway-protocol.h
-@@ -160,7 +160,7 @@ typedef struct {
+@@ -36,6 +36,9 @@ typedef enum {
+   BROADWAY_OP_SET_TRANSIENT_FOR = 'p',
+   BROADWAY_OP_PUT_RGB = 'i',
+   BROADWAY_OP_FLUSH = 'f',
++  BROADWAY_OP_REQUEST_AUTH = 'l',
++  BROADWAY_OP_AUTH_OK = 'L',
++  BROADWAY_OP_DISCONNECTED = 'D',
+ } BroadwayOpType;
+ 
  typedef struct {
-   BroadwayRequestBase base;
-   guint32 id;
--  char name[34];
-+  char name[36];
-   guint32 width;
-   guint32 height;
- } BroadwayRequestUpdate;
-diff --git a/gdk/broadway/broadwayd.c b/gdk/broadway/broadwayd.c
-index 9a273c7..1c06eb7 100644
---- a/gdk/broadway/broadwayd.c
-+++ b/gdk/broadway/broadwayd.c
-@@ -409,7 +409,6 @@ client_fill_cb (GObject *source_object,
-       guint32 size;
-       gsize count, remaining;
-       guint8 *buffer;
--      BroadwayRequest request;
+diff --git a/gdk/broadway/broadway-server.c b/gdk/broadway/broadway-server.c
+index 86f0053..22fe33d 100644
+--- a/gdk/broadway/broadway-server.c
++++ b/gdk/broadway/broadway-server.c
+@@ -2,6 +2,8 @@
  
-       buffer = (guint8 *)g_buffered_input_stream_peek_buffer (client->in, &count);
+ #include "broadway-output.h"
  
-@@ -417,14 +416,10 @@ client_fill_cb (GObject *source_object,
-       while (remaining >= sizeof (guint32))
- 	{
- 	  memcpy (&size, buffer, sizeof (guint32));
--	  
++#define _XOPEN_SOURCE /* for crypt */
 +
- 	  if (size <= remaining)
+ #include <glib.h>
+ #include <glib/gprintf.h>
+ #include "gdktypes.h"
+@@ -9,6 +11,10 @@
+ #include <string.h>
+ #include <errno.h>
+ #include <unistd.h>
++#include <crypt.h>
++#include <sys/mman.h>
++#include <sys/stat.h>
++#include <fcntl.h>
+ #include <sys/types.h>
+ #include <sys/socket.h>
+ #include <netinet/in.h>
+@@ -19,6 +25,7 @@ typedef struct BroadwayWindow BroadwayWindow;
+ struct _BroadwayServer {
+   GObject parent_instance;
+ 
++  char *password;
+   char *address;
+   int port;
+   GSocketService *service;
+@@ -69,6 +76,7 @@ typedef struct HttpRequest {
+ 
+ struct BroadwayInput {
+   BroadwayServer *server;
++  BroadwayOutput *output;
+   GSocketConnection *connection;
+   GByteArray *buffer;
+   GSource *source;
+@@ -76,6 +84,7 @@ struct BroadwayInput {
+   gint64 time_base;
+   gboolean proto_v7_plus;
+   gboolean binary;
++  gboolean active;
+ };
+ 
+ struct BroadwayWindow {
+@@ -90,6 +99,9 @@ struct BroadwayWindow {
+   gint32 transient_for;
+ 
+   cairo_surface_t *last_surface;
++
++  char *cached_surface_name;
++  cairo_surface_t *cached_surface;
+ };
+ 
+ static void broadway_server_resync_windows (BroadwayServer *server);
+@@ -100,6 +112,8 @@ static void
+ broadway_server_init (BroadwayServer *server)
+ {
+   BroadwayWindow *root;
++  char *passwd_file;
++  char *password, *p;
+ 
+   server->service = g_socket_service_new ();
+   server->pointer_grab_window_id = -1;
+@@ -108,6 +122,22 @@ broadway_server_init (BroadwayServer *server)
+   server->id_ht = g_hash_table_new (NULL, NULL);
+   server->id_counter = 0;
+ 
++  passwd_file = g_build_filename (g_get_user_config_dir (),
++				  "broadway.passwd", NULL);
++
++  if (g_file_get_contents (passwd_file,
++			   &password, NULL, NULL))
++    {
++      p = strchr (password, '\n');
++      if (p)
++	*p = 0;
++      g_strstrip (password);
++      if (strlen (password) > 3)
++	server->password = password;
++      else
++	g_free (password);
++    }
++
+   root = g_new0 (BroadwayWindow, 1);
+   root->id = server->id_counter++;
+   root->width = 1024;
+@@ -139,7 +169,7 @@ broadway_server_class_init (BroadwayServerClass * class)
+   object_class->finalize = broadway_server_finalize;
+ }
+ 
+-static void start_output (HttpRequest *request, gboolean proto_v7_plus, gboolean binary);
++static void start (BroadwayInput *input);
+ 
+ static void
+ http_request_free (HttpRequest *request)
+@@ -349,6 +379,14 @@ update_future_pointer_info (BroadwayServer *server, BroadwayInputPointerMsg *dat
+   server->future_mouse_in_toplevel = data->mouse_window_id;
+ }
+ 
++static gboolean
++verify_password (BroadwayServer *server, const char *password)
++{
++  char *hash;
++  hash = crypt (password, server->password);
++  return strcmp (hash, server->password) == 0;
++}
++
+ static void
+ parse_input_message (BroadwayInput *input, const char *message)
+ {
+@@ -357,6 +395,22 @@ parse_input_message (BroadwayInput *input, const char *message)
+   char *p;
+   gint64 time_;
+ 
++  if (!input->active)
++    {
++      /* The input has not been activated yet, handle auth/start */
++
++      if (message[0] != 'l' ||
++	  !verify_password (server, message+1))
++	{
++	  broadway_output_request_auth (input->output);
++	  broadway_output_flush (input->output);
++	}
++      else
++	start (input);
++
++      return;
++    }
++
+   memset (&msg, 0, sizeof (msg));
+ 
+   p = (char *)message;
+@@ -570,7 +624,7 @@ parse_input (BroadwayInput *input)
+ 	      }
+ 	    break;
+ 	  case BROADWAY_WS_CNX_PING:
+-	    broadway_output_pong (server->output);
++	    broadway_output_pong (input->output);
+ 	    break;
+ 	  case BROADWAY_WS_CNX_PONG:
+ 	    break; /* we never send pings, but tolerate pongs */
+@@ -596,7 +650,8 @@ parse_input (BroadwayInput *input)
+ 
+       if (buf[0] != 0)
+ 	{
+-	  server->input = NULL;
++	  if (server->input == input)
++	    server->input = NULL;
+ 	  broadway_input_free (input);
+ 	  return;
+ 	}
+@@ -613,7 +668,8 @@ parse_input (BroadwayInput *input)
+ 
+ 	  if (len > 0 && buf[0] != 0)
  	    {
--	      g_assert (size >= sizeof (BroadwayRequestBase));
--	      g_assert (size <= sizeof (BroadwayRequest));
+-	      server->input = NULL;
++	      if (server->input == input)
++		server->input = NULL;
+ 	      broadway_input_free (input);
+ 	      break;
+ 	    }
+@@ -640,19 +696,16 @@ queue_process_input_at_idle (BroadwayServer *server)
+ }
+ 
+ static void
+-broadway_server_read_all_input_nonblocking (BroadwayServer *server)
++broadway_server_read_all_input_nonblocking (BroadwayInput *input)
+ {
+   GInputStream *in;
+   gssize res;
+   guint8 buffer[1024];
+   GError *error;
+-  BroadwayInput *input;
+ 
+-  if (server->input == NULL)
++  if (input == NULL)
+     return;
+ 
+-  input = server->input;
 -
--	      memcpy (&request, buffer, size);
--	      client_handle_request (client, &request);
-+	      client_handle_request (client, (BroadwayRequest *)buffer);
+   in = g_io_stream_get_input_stream (G_IO_STREAM (input->connection));
  
- 	      remaining -= size;
- 	      buffer += size;
-diff --git a/gdk/broadway/gdkbroadway-server.c b/gdk/broadway/gdkbroadway-server.c
-index 2e33469..cb9bdf4 100644
---- a/gdk/broadway/gdkbroadway-server.c
-+++ b/gdk/broadway/gdkbroadway-server.c
-@@ -550,7 +550,7 @@ create_random_shm (char *name)
- static const cairo_user_data_key_t gdk_broadway_shm_cairo_key;
+   error = NULL;
+@@ -668,7 +721,8 @@ broadway_server_read_all_input_nonblocking (BroadwayServer *server)
+ 	  return;
+ 	}
  
- typedef struct {
--  char name[34];
-+  char name[36];
-   void *data;
-   gsize data_size;
- } BroadwayShmSurfaceData;
-@@ -610,7 +610,7 @@ _gdk_broadway_server_window_update (GdkBroadwayServer *server,
-   g_assert (data != NULL);
+-      server->input = NULL;
++      if (input->server->input == input)
++	input->server->input = NULL;
+       broadway_input_free (input);
+       if (res < 0)
+ 	{
+@@ -686,7 +740,7 @@ broadway_server_read_all_input_nonblocking (BroadwayServer *server)
+ static void
+ broadway_server_consume_all_input (BroadwayServer *server)
+ {
+-  broadway_server_read_all_input_nonblocking (server);
++  broadway_server_read_all_input_nonblocking (server->input);
  
-   msg.id = id;
--  memcpy (msg.name, data->name, 34);
-+  memcpy (msg.name, data->name, 36);
-   msg.width = cairo_image_surface_get_width (surface);
-   msg.height = cairo_image_surface_get_height (surface);
+   /* Since we're parsing input but not processing the resulting messages
+      we might not get a readable callback on the stream, so queue an idle to
+@@ -701,9 +755,10 @@ input_data_cb (GObject  *stream,
+ {
+   BroadwayServer *server = input->server;
  
-diff --git a/gtk/gtktextview.c b/gtk/gtktextview.c
-index 1a0b560..2de8a1e 100644
---- a/gtk/gtktextview.c
-+++ b/gtk/gtktextview.c
-@@ -9101,7 +9101,8 @@ text_window_scroll        (GtkTextWindow *win,
+-  broadway_server_read_all_input_nonblocking (server);
++  broadway_server_read_all_input_nonblocking (input);
  
-   if (dx != 0 || dy != 0)
+-  process_input_messages (server);
++  if (input->active)
++    process_input_messages (server);
+ 
+   return TRUE;
+ }
+@@ -878,15 +933,14 @@ start_input (HttpRequest *request, gboolean binary)
+   gsize len;
+   GChecksum *checksum;
+   char *origin, *host;
+-  BroadwayServer *server;
+   BroadwayInput *input;
+   const void *data_buffer;
+   gsize data_buffer_size;
+   GInputStream *in;
+   char *key_v7;
+   gboolean proto_v7_plus;
+-
+-  server = request->server;
++  GSocket *socket;
++  int flag = 1;
+ 
+ #ifdef DEBUG_WEBSOCKETS
+   g_print ("incoming request:\n%s\n", request->request->str);
+@@ -1033,15 +1087,11 @@ start_input (HttpRequest *request, gboolean binary)
+       proto_v7_plus = FALSE;
+     }
+ 
+-
+-  if (server->input != NULL)
+-    {
+-      broadway_input_free (server->input);
+-      server->input = NULL;
+-    }
++  socket = g_socket_connection_get_socket (request->connection);
++  setsockopt (g_socket_get_fd (socket), IPPROTO_TCP,
++	      TCP_NODELAY, (char *) &flag, sizeof(int));
+ 
+   input = g_new0 (BroadwayInput, 1);
+-
+   input->server = request->server;
+   input->connection = g_object_ref (request->connection);
+   input->proto_v7_plus = proto_v7_plus;
+@@ -1051,9 +1101,9 @@ start_input (HttpRequest *request, gboolean binary)
+   input->buffer = g_byte_array_sized_new (data_buffer_size);
+   g_byte_array_append (input->buffer, data_buffer, data_buffer_size);
+ 
+-  server->input = input;
+-
+-  start_output (request, proto_v7_plus, binary);
++  input->output =
++    broadway_output_new (g_io_stream_get_output_stream (G_IO_STREAM (request->connection)),
++			 0, proto_v7_plus, binary);
+ 
+   /* This will free and close the data input stream, but we got all the buffered content already */
+   http_request_free (request);
+@@ -1063,35 +1113,53 @@ start_input (HttpRequest *request, gboolean binary)
+   g_source_set_callback (input->source, (GSourceFunc)input_data_cb, input, NULL);
+   g_source_attach (input->source, NULL);
+ 
++  if (input->server->password)
++    {
++      broadway_output_request_auth (input->output);
++      broadway_output_flush (input->output);
++    }
++  else
++    start (input);
++
+   /* Process any data in the pipe already */
+   parse_input (input);
+-  process_input_messages (server);
+ 
+   g_strfreev (lines);
+ }
+ 
+ static void
+-start_output (HttpRequest *request, gboolean proto_v7_plus, gboolean binary)
++start (BroadwayInput *input)
+ {
+-  GSocket *socket;
+   BroadwayServer *server;
+-  int flag = 1;
+ 
+-  socket = g_socket_connection_get_socket (request->connection);
+-  setsockopt(g_socket_get_fd (socket), IPPROTO_TCP,
+-	     TCP_NODELAY, (char *) &flag, sizeof(int));
++  input->active = TRUE;
+ 
+-  server = BROADWAY_SERVER (request->server);
++  server = BROADWAY_SERVER (input->server);
++
++  if (server->output)
++    {
++      broadway_output_disconnected (server->output);
++      broadway_output_flush (server->output);
++    }
++
++  if (server->input != NULL)
++    {
++      broadway_input_free (server->input);
++      server->input = NULL;
++    }
++
++  server->input = input;
+ 
+   if (server->output)
      {
--      _gtk_bubble_window_popdown (GTK_BUBBLE_WINDOW (priv->selection_bubble));
-+      if (priv->selection_bubble)
-+        _gtk_bubble_window_popdown (GTK_BUBBLE_WINDOW (priv->selection_bubble));
-       gdk_window_scroll (win->bin_window, dx, dy);
+       server->saved_serial = broadway_output_get_next_serial (server->output);
+       broadway_output_free (server->output);
+     }
++  server->output = input->output;
+ 
+-  server->output =
+-    broadway_output_new (g_io_stream_get_output_stream (G_IO_STREAM (request->connection)),
+-			 server->saved_serial, proto_v7_plus, binary);
++  broadway_output_set_next_serial (server->output, server->saved_serial);
++  broadway_output_auth_ok (server->output);
++  broadway_output_flush (server->output);
+ 
+   broadway_server_resync_windows (server);
+ 
+@@ -1099,6 +1167,8 @@ start_output (HttpRequest *request, gboolean proto_v7_plus, gboolean binary)
+     broadway_output_grab_pointer (server->output,
+ 				  server->pointer_grab_window_id,
+ 				  server->pointer_grab_owner_events);
++
++  process_input_messages (server);
+ }
+ 
+ static void
+@@ -1349,6 +1419,12 @@ broadway_server_destroy_window (BroadwayServer *server,
+       server->toplevels = g_list_remove (server->toplevels, window);
+       g_hash_table_remove (server->id_ht,
+ 			   GINT_TO_POINTER (id));
++
++      if (window->cached_surface_name != NULL)
++	g_free (window->cached_surface_name);
++      if (window->cached_surface != NULL)
++	cairo_surface_destroy (window->cached_surface);
++
+       g_free (window);
      }
  }
+@@ -1583,6 +1659,11 @@ broadway_server_window_update (BroadwayServer *server,
+ 						       window->width,
+ 						       window->height);
+ 
++  g_assert (window->width == cairo_image_surface_get_width (window->last_surface));
++  g_assert (window->width == cairo_image_surface_get_width (surface));
++  g_assert (window->height == cairo_image_surface_get_height (window->last_surface));
++  g_assert (window->height == cairo_image_surface_get_height (surface));
++
+   if (server->output != NULL)
+     {
+       if (window->last_synced)
+@@ -1739,6 +1820,86 @@ broadway_server_ungrab_pointer (BroadwayServer *server,
+   return serial;
+ }
+ 
++static const cairo_user_data_key_t shm_cairo_key;
++
++typedef struct {
++  void *data;
++  gsize data_size;
++} ShmSurfaceData;
++
++static void
++shm_data_unmap (void *_data)
++{
++  ShmSurfaceData *data = _data;
++  munmap (data->data, data->data_size);
++  g_free (data);
++}
++
++cairo_surface_t *
++broadway_server_open_surface (BroadwayServer *server,
++			      guint32 id,
++			      char *name,
++			      int width,
++			      int height)
++{
++  BroadwayWindow *window;
++  ShmSurfaceData *data;
++  cairo_surface_t *surface;
++  gsize size;
++  void *ptr;
++  int fd;
++
++  window = g_hash_table_lookup (server->id_ht,
++				GINT_TO_POINTER (id));
++  if (window == NULL)
++    return NULL;
++
++  if (window->cached_surface_name != NULL &&
++      strcmp (name, window->cached_surface_name) == 0)
++    return cairo_surface_reference (window->cached_surface);
++
++  size = width * height * sizeof (guint32);
++
++  fd = shm_open(name, O_RDONLY, 0600);
++  if (fd == -1)
++    {
++      perror ("Failed to shm_open");
++      return NULL;
++    }
++
++  ptr = mmap(0, size, PROT_READ, MAP_SHARED, fd, 0);
++  (void) close(fd);
++
++  shm_unlink (name);
++
++  if (ptr == NULL)
++    return NULL;
++
++  data = g_new0 (ShmSurfaceData, 1);
++
++  data->data = ptr;
++  data->data_size = size;
++
++  surface = cairo_image_surface_create_for_data ((guchar *)data->data,
++						 CAIRO_FORMAT_RGB24,
++						 width, height,
++						 width * sizeof (guint32));
++  g_assert (surface != NULL);
++
++  cairo_surface_set_user_data (surface, &shm_cairo_key,
++			       data, shm_data_unmap);
++
++  if (window->cached_surface_name != NULL)
++    g_free (window->cached_surface_name);
++  window->cached_surface_name = g_strdup (name);
++
++  if (window->cached_surface != NULL)
++    cairo_surface_destroy (window->cached_surface);
++  window->cached_surface = cairo_surface_reference (surface);
++
++  return surface;
++}
++
+ guint32
+ broadway_server_new_window (BroadwayServer *server,
+ 			    int x,
+diff --git a/gdk/broadway/broadway-server.h b/gdk/broadway/broadway-server.h
+index 4ef9338..7941bcd 100644
+--- a/gdk/broadway/broadway-server.h
++++ b/gdk/broadway/broadway-server.h
+@@ -78,5 +78,10 @@ gboolean            broadway_server_window_move_resize       (BroadwayServer   *
+ 							      int               y,
+ 							      int               width,
+ 							      int               height);
++cairo_surface_t * broadway_server_open_surface (BroadwayServer *server,
++						guint32 id,
++						char *name,
++						int width,
++						int height);
+ 
+ #endif /* __BROADWAY_SERVER__ */
+diff --git a/gdk/broadway/broadway.js b/gdk/broadway/broadway.js
+index a53f837..6f7a765 100644
+--- a/gdk/broadway/broadway.js
++++ b/gdk/broadway/broadway.js
+@@ -225,34 +225,16 @@ function flushSurface(surface)
+ 	    context.save();
+ 	    context.beginPath();
+ 
+-	    var minx;
+-	    var miny;
+-	    var maxx;
+-	    var maxy;
+ 	    for (var j = 0; j < cmd.rects.length; j++) {
+ 		var rect = cmd.rects[j];
+ 		context.rect(rect.x, rect.y, rect.w, rect.h);
+-		if (j == 0) {
+-		    minx = rect.x;
+-		    miny = rect.y;
+-		    maxx = rect.x + rect.w;
+-		    maxy = rect.y + rect.h;
+-		} else {
+-		    if (rect.x < minx)
+-			minx = rect.x;
+-		    if (rect.y < miny)
+-			miny = rect.y;
+-		    if (rect.x + rect.w > maxx)
+-			maxx = rect.x + rect.w;
+-		    if (rect.y + rect.h > maxy)
+-			maxy = rect.y + rect.h;
+-		}
+ 	    }
+ 	    context.clip();
+-	    context.globalCompositeOperation = "copy";
+-	    context.drawImage(context.canvas,
+-			      minx - cmd.dx, miny - cmd.dy, maxx - minx, maxy - miny,
+-			      minx, miny, maxx - minx, maxy - miny);
++	    // This seems to break chrome when src overlaps dest
++	    // But source-over should be fine for rgb surfaces anyway
++	    //context.globalCompositeOperation = "copy";
++	    context.drawImage(surface.canvas,
++			      cmd.dx, cmd.dy);
+ 	    context.restore();
+ 	    break;
+ 
+@@ -496,12 +478,6 @@ function cmdMoveResizeSurface(id, has_pos, x, y, has_size, w, h)
+ 	    var xOffset = surface.x;
+ 	    var yOffset = surface.y;
+ 
+-	    var transientToplevel = getTransientToplevel(surface);
+-	    if (transientToplevel) {
+-		xOffset = surface.x - transientToplevel.x;
+-		yOffset = surface.y - transientToplevel.y;
+-	    }
+-
+ 	    var element = surface.canvas;
+ 	    if (surface.frame) {
+ 		element = surface.frame;
+@@ -543,6 +519,21 @@ function handleCommands(cmd)
+ 	var command = cmd.get_char();
+ 	lastSerial = cmd.get_32();
+ 	switch (command) {
++	case 'l':
++	    login ();
++	    break;
++
++	case 'L':
++	    if (loginDiv != null)
++		loginDiv.parentNode.removeChild(loginDiv);
++	    start ();
++	    break;
++
++	case 'D':
++	    alert ("disconnected");
++	    inputSocket = null;
++	    break;
++
+ 	case 's': // create new surface
+ 	    id = cmd.get_16();
+ 	    x = cmd.get_16s();
+@@ -742,8 +733,12 @@ BinCommands.prototype.get_32 = function() {
+ };
+ BinCommands.prototype.get_image_url = function() {
+     var size = this.get_32();
+-    var png_blob = new Blob ([this.arraybuffer.slice (this.pos, this.pos + size)], {type:"image/png"});
+-    var url = URL.createObjectURL(png_blob, {oneTimeOnly: true});
++    var png_blob = new Blob ([new Uint8Array (this.arraybuffer, this.pos, size)], {type:"image/png"});
++    var url;
++    if (window.webkitURL)
++	url = window.webkitURL.createObjectURL(png_blob);
++    else
++	url = window.URL.createObjectURL(png_blob, {oneTimeOnly: true});
+     this.pos = this.pos + size;
+     return url;
+ };
+@@ -2590,7 +2585,7 @@ function onMouseWheel(ev)
+     var id = getSurfaceId(ev);
+     var pos = getPositionsFromEvent(ev, id);
+ 
+-    var offset = ev.detail ? ev.detail : ev.wheelDelta;
++    var offset = ev.detail ? ev.detail : -ev.wheelDelta;
+     var dir = 0;
+     if (offset > 0)
+ 	dir = 1;
+@@ -2631,6 +2626,47 @@ function newWS(loc) {
+     return ws;
+ }
+ 
++function start()
++{
++    setupDocument(document);
++
++    var w, h;
++    w = window.innerWidth;
++    h = window.innerHeight;
++    window.onresize = function(ev) {
++	var w, h;
++	w = window.innerWidth;
++	h = window.innerHeight;
++	sendInput ("d", [w, h]);
++    };
++    sendInput ("d", [w, h]);
++}
++
++var loginDiv = null;
++function login()
++{
++    if (loginDiv == null) {
++	var div = document.createElement('div');
++	document.body.appendChild(div);
++	div.innerHTML = "Please enter password<br>";
++	div.style.marginTop = "40px";
++	div.style.textAlign = "center";
++
++	var input = document.createElement("input");
++	input.setAttribute("type", "password");
++	div.appendChild(input);
++	input.focus ();
++	input.onkeyup = function(e) {
++	    if (e.keyCode === 13 && input.value != "") {
++		inputSocket.send ("l" + input.value);
++	    }
++	}
++	loginDiv = div;
++    } else {
++	alert ("Wrong password");
++    }
++}
++
+ function connect()
+ {
+     var url = window.location.toString();
+@@ -2639,7 +2675,7 @@ function connect()
+ 	var params = query_string[1].split("&");
+     }
+ 
+-    var loc = window.location.toString().replace("http:", "ws:");
++    var loc = window.location.toString().replace("http:", "ws:").replace("https:", "wss:");
+     loc = loc.substr(0, loc.lastIndexOf('/')) + "/socket";
+ 
+     var supports_binary = newWS (loc + "-test").binaryType == "blob";
+@@ -2652,23 +2688,13 @@ function connect()
+ 
+     ws.onopen = function() {
+ 	inputSocket = ws;
+-	var w, h;
+-	w = window.innerWidth;
+-	h = window.innerHeight;
+-	window.onresize = function(ev) {
+-	    var w, h;
+-	    w = window.innerWidth;
+-	    h = window.innerHeight;
+-	    sendInput ("d", [w, h]);
+-	};
+-	sendInput ("d", [w, h]);
+     };
+     ws.onclose = function() {
++	if (inputSocket != null)
++	    alert ("disconnected");
+ 	inputSocket = null;
+     };
+     ws.onmessage = function(event) {
+ 	handleMessage(event.data);
+     };
+-
+-    setupDocument(document);
+ }
+diff --git a/gdk/broadway/broadwayd.c b/gdk/broadway/broadwayd.c
+index 1c06eb7..94f4bd4 100644
+--- a/gdk/broadway/broadwayd.c
++++ b/gdk/broadway/broadwayd.c
+@@ -140,62 +140,6 @@ region_from_rects (BroadwayRect *rects, int n_rects)
+   return region;
+ }
+ 
+-static const cairo_user_data_key_t shm_cairo_key;
+-
+-typedef struct {
+-  void *data;
+-  gsize data_size;
+-} ShmSurfaceData;
+-
+-static void
+-shm_data_unmap (void *_data)
+-{
+-  ShmSurfaceData *data = _data;
+-  munmap (data->data, data->data_size);
+-  g_free (data);
+-}
+-
+-cairo_surface_t *
+-open_surface (char *name, int width, int height)
+-{
+-  ShmSurfaceData *data;
+-  cairo_surface_t *surface;
+-  gsize size;
+-  void *ptr;
+-  int fd;
+-
+-  size = width * height * sizeof (guint32);
+-
+-  fd = shm_open(name, O_RDONLY, 0600);
+-  if (fd == -1)
+-    {
+-      perror ("Failed to shm_open");
+-      return NULL;
+-    }
+-
+-  ptr = mmap(0, size, PROT_READ, MAP_SHARED, fd, 0); 
+-  (void) close(fd);
+-
+-  if (ptr == NULL)
+-    return NULL;
+-
+-  data = g_new0 (ShmSurfaceData, 1);
+-
+-  data->data = ptr;
+-  data->data_size = size;
+-
+-  surface = cairo_image_surface_create_for_data ((guchar *)data->data,
+-						 CAIRO_FORMAT_RGB24,
+-						 width, height,
+-						 width * sizeof (guint32));
+-  g_assert (surface != NULL);
+-  
+-  cairo_surface_set_user_data (surface, &shm_cairo_key,
+-			       data, shm_data_unmap);
+-
+-  return surface;
+-}
+-
+ void
+ add_client_serial_mapping (BroadwayClient *client,
+ 			   guint32 client_serial,
+@@ -337,9 +281,11 @@ client_handle_request (BroadwayClient *client,
+       cairo_region_destroy (area);
+       break;
+     case BROADWAY_REQUEST_UPDATE:
+-      surface = open_surface (request->update.name,
+-			      request->update.width,
+-			      request->update.height);
++      surface = broadway_server_open_surface (server,
++					      request->update.id,
++					      request->update.name,
++					      request->update.width,
++					      request->update.height);
+       if (surface != NULL)
+ 	{
+ 	  broadway_server_window_update (server,
+diff --git a/gdk/broadway/gdkdevice-broadway.c b/gdk/broadway/gdkdevice-broadway.c
+index 5d5cde3..e922c58 100644
+--- a/gdk/broadway/gdkdevice-broadway.c
++++ b/gdk/broadway/gdkdevice-broadway.c
+@@ -188,7 +188,7 @@ gdk_broadway_device_query_state (GdkDevice        *device,
+   if (root_y)
+     *root_y = device_root_y;
+   if (win_x)
+-    *win_x = device_root_y - toplevel->x;
++    *win_x = device_root_x - toplevel->x;
+   if (win_y)
+     *win_y = device_root_y - toplevel->y;
+   if (mask)
+diff --git a/gdk/broadway/gdkdisplay-broadway.h b/gdk/broadway/gdkdisplay-broadway.h
+index 0b8c83a..b249e80 100644
+--- a/gdk/broadway/gdkdisplay-broadway.h
++++ b/gdk/broadway/gdkdisplay-broadway.h
+@@ -66,6 +66,8 @@ struct _GdkBroadwayDisplay
+   GdkWindow *active_offscreen_window;
+ 
+   GdkBroadwayServer *server;
++
++  gpointer move_resize_data;
+ };
+ 
+ struct _GdkBroadwayDisplayClass
+diff --git a/gdk/broadway/gdkeventsource.c b/gdk/broadway/gdkeventsource.c
+index a4399c4..a23da78 100644
+--- a/gdk/broadway/gdkeventsource.c
++++ b/gdk/broadway/gdkeventsource.c
+@@ -256,10 +256,6 @@ _gdk_broadway_events_got_input (BroadwayInputMsg *message)
+       {
+ 	window->x = message->configure_notify.x;
+ 	window->y = message->configure_notify.y;
+-	window->width = message->configure_notify.width;
+-	window->height = message->configure_notify.height;
+-	_gdk_window_update_size (window);
+-	_gdk_broadway_window_resize_surface (window);
+ 
+ 	event = gdk_event_new (GDK_CONFIGURE);
+ 	event->configure.window = g_object_ref (window);
+diff --git a/gdk/broadway/gdkwindow-broadway.c b/gdk/broadway/gdkwindow-broadway.c
+index df3e965..d59fcb7 100644
+--- a/gdk/broadway/gdkwindow-broadway.c
++++ b/gdk/broadway/gdkwindow-broadway.c
+@@ -83,18 +83,16 @@ G_DEFINE_TYPE (GdkWindowImplBroadway,
+ 	       gdk_window_impl_broadway,
+ 	       GDK_TYPE_WINDOW_IMPL)
+ 
+-static guint dirty_flush_id = 0;
+-
+-static gboolean
+-dirty_flush_idle (gpointer data)
++static void
++update_dirty_windows_and_sync (void)
+ {
+   GList *l;
+   GdkBroadwayDisplay *display;
+-
+-  dirty_flush_id = 0;
++  gboolean updated_surface;
+ 
+   display = GDK_BROADWAY_DISPLAY (gdk_display_get_default ());
+ 
++  updated_surface = FALSE;
+   for (l = display->toplevels; l != NULL; l = l->next)
+     {
+       GdkWindowImplBroadway *impl = l->data;
+@@ -102,6 +100,7 @@ dirty_flush_idle (gpointer data)
+       if (impl->dirty)
+ 	{
+ 	  impl->dirty = FALSE;
++	  updated_surface = TRUE;
+ 	  _gdk_broadway_server_window_update (display->server,
+ 					      impl->id,
+ 					      impl->surface);
+@@ -110,16 +109,32 @@ dirty_flush_idle (gpointer data)
+ 
+   /* We sync here to ensure all references to the impl->surface memory
+      is done, as we may later paint new data in them. */
+-  gdk_display_sync (GDK_DISPLAY (display));
++  if (updated_surface)
++    gdk_display_sync (GDK_DISPLAY (display));
++  else
++    gdk_display_flush (GDK_DISPLAY (display));
++}
++
++static guint flush_id = 0;
++
++static gboolean
++flush_idle (gpointer data)
++{
++  flush_id = 0;
++
++  gdk_display_flush (gdk_display_get_default ());
+ 
+   return FALSE;
+ }
+ 
++/* We need to flush in an idle rather than AFTER_PAINT, as the clock
++   is frozen during e.g. window resizes so the paint will not happen
++   and the window resize request is never flushed. */
+ static void
+-queue_dirty_flush (GdkBroadwayDisplay *display)
++queue_flush (GdkWindow *window)
+ {
+-  if (dirty_flush_id == 0)
+-    dirty_flush_id = gdk_threads_add_idle (dirty_flush_idle, NULL);
++  if (flush_id == 0)
++    flush_id = gdk_threads_add_idle (flush_idle, NULL);
+ }
+ 
+ static void
+@@ -197,6 +212,25 @@ _gdk_broadway_screen_init_root_window (GdkScreen * screen)
+   _gdk_window_update_size (broadway_screen->root_window);
+ }
+ 
++static void
++on_frame_clock_after_paint (GdkFrameClock *clock,
++                            GdkWindow     *window)
++{
++  update_dirty_windows_and_sync ();
++}
++
++static void
++connect_frame_clock (GdkWindow *window)
++{
++  if (WINDOW_IS_TOPLEVEL (window))
++    {
++      GdkFrameClock *frame_clock = gdk_window_get_frame_clock (window);
++
++      g_signal_connect (frame_clock, "after-paint",
++                        G_CALLBACK (on_frame_clock_after_paint), window);
++    }
++}
++
+ void
+ _gdk_broadway_display_create_window_impl (GdkDisplay    *display,
+ 					  GdkWindow     *window,
+@@ -229,6 +263,8 @@ _gdk_broadway_display_create_window_impl (GdkDisplay    *display,
+   g_assert (GDK_WINDOW_TYPE (window->parent) == GDK_WINDOW_ROOT);
+ 
+   broadway_display->toplevels = g_list_prepend (broadway_display->toplevels, impl);
++
++  connect_frame_clock (window);
+ }
+ 
+ void
+@@ -384,7 +420,7 @@ gdk_window_broadway_show (GdkWindow *window, gboolean already_mapped)
+ 
+   broadway_display = GDK_BROADWAY_DISPLAY (gdk_window_get_display (window));
+   if (_gdk_broadway_server_window_show (broadway_display->server, impl->id))
+-    queue_dirty_flush (broadway_display);
++    queue_flush (window);
+ 
+ }
+ 
+@@ -405,7 +441,7 @@ gdk_window_broadway_hide (GdkWindow *window)
+ 
+   broadway_display = GDK_BROADWAY_DISPLAY (gdk_window_get_display (window));
+   if (_gdk_broadway_server_window_hide (broadway_display->server, impl->id))
+-    queue_dirty_flush (broadway_display);
++    queue_flush (window);
+ 
+   _gdk_window_clear_update_area (window);
+ }
+@@ -460,7 +496,7 @@ gdk_window_broadway_move_resize (GdkWindow *window,
+ 					   with_move,
+ 					   x, y,
+ 					   window->width, window->height);
+-  queue_dirty_flush (broadway_display);
++  queue_flush (window);
+   if (size_changed)
+     window->resize_count++;
+ }
+@@ -545,6 +581,12 @@ gdk_broadway_window_set_geometry_hints (GdkWindow         *window,
+ 					const GdkGeometry *geometry,
+ 					GdkWindowHints     geom_mask)
+ {
++  GdkWindowImplBroadway *impl;
++
++  impl = GDK_WINDOW_IMPL_BROADWAY (window->impl);
++
++  impl->geometry_hints = *geometry;
++  impl->geometry_hints_mask = geom_mask;
+ }
+ 
+ static void
+@@ -992,6 +1034,8 @@ struct _MoveResizeData
+   gint moveresize_orig_width;
+   gint moveresize_orig_height;
+   long moveresize_process_time;
++  GdkWindowHints moveresize_geom_mask;
++  GdkGeometry moveresize_geometry;
+   BroadwayInputMsg *moveresize_pending_event;
+ };
+ 
+@@ -999,20 +1043,19 @@ static MoveResizeData *
+ get_move_resize_data (GdkDisplay *display,
+ 		      gboolean    create)
+ {
++  GdkBroadwayDisplay *broadway_display;
+   MoveResizeData *mv_resize;
+-  static GQuark move_resize_quark = 0;
+ 
+-  if (!move_resize_quark)
+-    move_resize_quark = g_quark_from_static_string ("gdk-window-moveresize");
++  broadway_display = GDK_BROADWAY_DISPLAY (display);
+ 
+-  mv_resize = g_object_get_qdata (G_OBJECT (display), move_resize_quark);
++  mv_resize = broadway_display->move_resize_data;
+ 
+   if (!mv_resize && create)
+     {
+       mv_resize = g_new0 (MoveResizeData, 1);
+       mv_resize->display = display;
+ 
+-      g_object_set_qdata (G_OBJECT (display), move_resize_quark, mv_resize);
++      broadway_display->move_resize_data = mv_resize;
+     }
+ 
+   return mv_resize;
+@@ -1081,6 +1124,13 @@ update_pos (MoveResizeData *mv_resize,
+       w = MAX (w, 1);
+       h = MAX (h, 1);
+ 
++      if (mv_resize->moveresize_geom_mask)
++	{
++	  gdk_window_constrain_size (&mv_resize->moveresize_geometry,
++				     mv_resize->moveresize_geom_mask,
++				     w, h, &w, &h);
++	}
++
+       gdk_window_move_resize (mv_resize->moveresize_window, x, y, w, h);
+     }
+   else
+@@ -1135,7 +1185,7 @@ _gdk_broadway_moveresize_handle_event (GdkDisplay *display,
+ 
+   switch (event->base.type)
+     {
+-    case 'm':
++    case BROADWAY_EVENT_POINTER_MOVE:
+       if (mv_resize->moveresize_window->resize_count > 0)
+ 	{
+ 	  if (mv_resize->moveresize_pending_event)
+@@ -1163,7 +1213,7 @@ _gdk_broadway_moveresize_handle_event (GdkDisplay *display,
+ 	finish_drag (mv_resize);
+       break;
+ 
+-    case 'B':
++    case BROADWAY_EVENT_BUTTON_RELEASE:
+       update_pos (mv_resize,
+ 		  event->pointer.root_x,
+ 		  event->pointer.root_y);
+@@ -1244,6 +1294,71 @@ create_moveresize_window (MoveResizeData *mv_resize,
+ }
+ 
+ static void
++calculate_unmoving_origin (MoveResizeData *mv_resize)
++{
++  GdkRectangle rect;
++  gint width, height;
++
++  if (mv_resize->moveresize_geom_mask & GDK_HINT_WIN_GRAVITY &&
++      mv_resize->moveresize_geometry.win_gravity == GDK_GRAVITY_STATIC)
++    {
++      gdk_window_get_origin (mv_resize->moveresize_window,
++			     &mv_resize->moveresize_orig_x,
++			     &mv_resize->moveresize_orig_y);
++    }
++  else
++    {
++      gdk_window_get_frame_extents (mv_resize->moveresize_window, &rect);
++      gdk_window_get_geometry (mv_resize->moveresize_window,
++			       NULL, NULL, &width, &height);
++
++      switch (mv_resize->moveresize_geometry.win_gravity)
++	{
++	case GDK_GRAVITY_NORTH_WEST:
++	  mv_resize->moveresize_orig_x = rect.x;
++	  mv_resize->moveresize_orig_y = rect.y;
++	  break;
++	case GDK_GRAVITY_NORTH:
++	  mv_resize->moveresize_orig_x = rect.x + rect.width / 2 - width / 2;
++	  mv_resize->moveresize_orig_y = rect.y;
++	  break;
++	case GDK_GRAVITY_NORTH_EAST:
++	  mv_resize->moveresize_orig_x = rect.x + rect.width - width;
++	  mv_resize->moveresize_orig_y = rect.y;
++	  break;
++	case GDK_GRAVITY_WEST:
++	  mv_resize->moveresize_orig_x = rect.x;
++	  mv_resize->moveresize_orig_y = rect.y + rect.height / 2 - height / 2;
++	  break;
++	case GDK_GRAVITY_CENTER:
++	  mv_resize->moveresize_orig_x = rect.x + rect.width / 2 - width / 2;
++	  mv_resize->moveresize_orig_y = rect.y + rect.height / 2 - height / 2;
++	  break;
++	case GDK_GRAVITY_EAST:
++	  mv_resize->moveresize_orig_x = rect.x + rect.width - width;
++	  mv_resize->moveresize_orig_y = rect.y + rect.height / 2 - height / 2;
++	  break;
++	case GDK_GRAVITY_SOUTH_WEST:
++	  mv_resize->moveresize_orig_x = rect.x;
++	  mv_resize->moveresize_orig_y = rect.y + rect.height - height;
++	  break;
++	case GDK_GRAVITY_SOUTH:
++	  mv_resize->moveresize_orig_x = rect.x + rect.width / 2 - width / 2;
++	  mv_resize->moveresize_orig_y = rect.y + rect.height - height;
++	  break;
++	case GDK_GRAVITY_SOUTH_EAST:
++	  mv_resize->moveresize_orig_x = rect.x + rect.width - width;
++	  mv_resize->moveresize_orig_y = rect.y + rect.height - height;
++	  break;
++	default:
++	  mv_resize->moveresize_orig_x = rect.x;
++	  mv_resize->moveresize_orig_y = rect.y;
++	  break;
++	}
++    }
++}
++
++static void
+ gdk_broadway_window_begin_resize_drag (GdkWindow     *window,
+ 				       GdkWindowEdge  edge,
+                                        GdkDevice     *device,
+@@ -1253,6 +1368,9 @@ gdk_broadway_window_begin_resize_drag (GdkWindow     *window,
+ 				       guint32        timestamp)
+ {
+   MoveResizeData *mv_resize;
++  GdkWindowImplBroadway *impl;
++
++  impl = GDK_WINDOW_IMPL_BROADWAY (window->impl);
+ 
+   if (GDK_WINDOW_DESTROYED (window) ||
+       !WINDOW_IS_TOPLEVEL_OR_FOREIGN (window))
+@@ -1267,12 +1385,14 @@ gdk_broadway_window_begin_resize_drag (GdkWindow     *window,
+   mv_resize->moveresize_y = root_y;
+   mv_resize->moveresize_window = g_object_ref (window);
+ 
+-  gdk_window_get_origin (mv_resize->moveresize_window,
+-			 &mv_resize->moveresize_orig_x,
+-			 &mv_resize->moveresize_orig_y);
+   mv_resize->moveresize_orig_width = gdk_window_get_width (window);
+   mv_resize->moveresize_orig_height = gdk_window_get_height (window);
+ 
++  mv_resize->moveresize_geom_mask = impl->geometry_hints_mask;
++  mv_resize->moveresize_geometry = impl->geometry_hints;
++
++  calculate_unmoving_origin (mv_resize);
++
+   create_moveresize_window (mv_resize, timestamp);
+ }
+ 
+@@ -1328,7 +1448,6 @@ gdk_broadway_window_process_updates_recurse (GdkWindow *window,
+ 
+   impl = GDK_WINDOW_IMPL_BROADWAY (window->impl);
+   impl->dirty = TRUE;
+-  queue_dirty_flush (GDK_BROADWAY_DISPLAY (gdk_window_get_display (window)));
+ }
+ 
+ void
+@@ -1394,7 +1513,7 @@ _gdk_broadway_window_translate (GdkWindow      *window,
+       if (_gdk_broadway_server_window_translate (broadway_display->server,
+ 						 impl->id,
+ 						 area, dx, dy))
+-	queue_dirty_flush (broadway_display);
++	queue_flush (window);
+     }
+ }
+ 
+diff --git a/gdk/broadway/gdkwindow-broadway.h b/gdk/broadway/gdkwindow-broadway.h
+index f540c51..c4d1b21 100644
+--- a/gdk/broadway/gdkwindow-broadway.h
++++ b/gdk/broadway/gdkwindow-broadway.h
+@@ -64,6 +64,9 @@ struct _GdkWindowImplBroadway
+   gint8 toplevel_window_type;
+   gboolean dirty;
+   gboolean last_synced;
++
++  GdkGeometry geometry_hints;
++  GdkWindowHints geometry_hints_mask;
+ };
+ 
+ struct _GdkWindowImplBroadwayClass

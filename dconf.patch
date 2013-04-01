@@ -1,0 +1,25 @@
+diff -up dconf-0.16.0/configure.broadway dconf-0.16.0/configure
+--- dconf-0.16.0/configure.broadway	2013-04-01 21:03:36.656364993 +0200
++++ dconf-0.16.0/configure	2013-04-01 21:04:09.032396435 +0200
+@@ -6476,16 +6476,16 @@ case "$am__api_version" in
+     ;;
+ esac
+ 
+-INTLTOOL_REQUIRED_VERSION_AS_INT=`echo 0.50.0 | awk -F. '{ print $ 1 * 1000 + $ 2 * 100 + $ 3; }'`
++INTLTOOL_REQUIRED_VERSION_AS_INT=`echo 0.41.0 | awk -F. '{ print $ 1 * 1000 + $ 2 * 100 + $ 3; }'`
+ INTLTOOL_APPLIED_VERSION=`intltool-update --version | head -1 | cut -d" " -f3`
+ INTLTOOL_APPLIED_VERSION_AS_INT=`echo $INTLTOOL_APPLIED_VERSION | awk -F. '{ print $ 1 * 1000 + $ 2 * 100 + $ 3; }'`
+-if test -n "0.50.0"; then
+-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for intltool >= 0.50.0" >&5
+-$as_echo_n "checking for intltool >= 0.50.0... " >&6; }
++if test -n "0.41.0"; then
++    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for intltool >= 0.41.0" >&5
++$as_echo_n "checking for intltool >= 0.41.0... " >&6; }
+     { $as_echo "$as_me:${as_lineno-$LINENO}: result: $INTLTOOL_APPLIED_VERSION found" >&5
+ $as_echo "$INTLTOOL_APPLIED_VERSION found" >&6; }
+     test "$INTLTOOL_APPLIED_VERSION_AS_INT" -ge "$INTLTOOL_REQUIRED_VERSION_AS_INT" ||
+-	as_fn_error $? "Your intltool is too old.  You need intltool 0.50.0 or later." "$LINENO" 5
++	as_fn_error $? "Your intltool is too old.  You need intltool 0.41.0 or later." "$LINENO" 5
+ fi
+ 
+ # Extract the first word of "intltool-update", so it can be a program name with args.

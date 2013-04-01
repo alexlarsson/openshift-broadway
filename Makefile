@@ -47,13 +47,13 @@ empty-root:
 create-root: empty-root modules
 	true;
 
-modules: glib fontconfig pixman cairo gobject-introspection atk harfbuzz pango gdk-pixbuf gtk+ librsvg gnome-themes-standard
+modules: glib fontconfig pixman cairo gobject-introspection atk harfbuzz pango gdk-pixbuf gtk+ librsvg gnome-themes-standard gsettings-desktop-schemas dconf vte itstool gnome-terminal
 	true
 
-glib: src/glib-2.35.8.tar.xz
+glib: src/glib-2.36.0.tar.xz
 	$(call build_tarball,$<,)
 
-fontconfig: src/fontconfig-2.10.91.tar.bz2
+fontconfig: src/fontconfig-2.10.92.tar.bz2
 #	We need DESTDIR to work around an issue with failing fc-cache
 	$(call build_tarball,$<,,,DESTDIR=/)
 
@@ -63,37 +63,53 @@ pixman: src/pixman-0.28.2.tar.gz
 cairo: src/cairo-1.12.8.tar.xz
 	$(call build_tarball,$<,)
 
-gobject-introspection: src/gobject-introspection-1.35.8.tar.xz
+gobject-introspection: src/gobject-introspection-1.36.0.tar.xz
 	$(call build_tarball,$<,)
 
-atk: src/atk-2.7.91.tar.xz
+atk: src/atk-2.8.0.tar.xz
 	$(call build_tarball,$<,)
 
-harfbuzz: src/harfbuzz-0.9.13.tar.bz2
+harfbuzz: src/harfbuzz-0.9.14.tar.bz2
 	$(call build_tarball,$<,)
 
 pango_extra_args:=--with-included-modules=arabic-lang,basic-fc,indic-lang
-pango: src/pango-1.33.8.tar.xz
+pango: src/pango-1.34.0.tar.xz
 	$(call build_tarball,$<,$(pango_extra_args))
 
 gdk_pixbuf_extra_args:=--with-included-loaders=png,jpeg --enable-gio-sniffing=no
-gdk-pixbuf: src/gdk-pixbuf-2.27.2.tar.xz
+gdk-pixbuf: src/gdk-pixbuf-2.28.0.tar.xz
 	$(call build_tarball,$<,$(gdk_pixbuf_extra_args))
 
-gtk+: src/gtk+-3.7.12.tar.xz
+gtk+: src/gtk+-3.8.0.tar.xz
 	$(call build_tarball,$<,--enable-broadway-backend,gtk.patch)
 
 librsvg: src/librsvg-2.37.0.tar.xz
 	$(call build_tarball,$<)
 
-gnome-themes-standard: src/gnome-themes-standard-3.7.91.tar.xz
+gnome-themes-standard: src/gnome-themes-standard-3.8.0.tar.xz
 	$(call build_tarball,$<,--disable-gtk2-engine)
+
+gsettings-desktop-schemas: src/gsettings-desktop-schemas-3.8.0.tar.xz
+	$(call build_tarball,$<)
+
+dconf: src/dconf-0.16.0.tar.xz
+	$(call build_tarball,$<,,dconf.patch)
+
+vte: src/vte-0.34.3.tar.xz
+	$(call build_tarball,$<)
+
+itstool: src/itstool-1.2.0.tar.bz2
+	$(call build_tarball,$<)
+
+gnome-terminal: src/gnome-terminal-3.8.0.1.tar.xz
+	$(call build_tarball,$<,--disable-migration,gnome-terminal.patch)
 
 create-export:
 	rm -rf export
 	mkdir -p export/{bin,var}
 	cp -r root/etc root/lib root/share export
 	cp root/bin/broadwayd root/bin/gtk3-demo root/bin/gtk3-demo-application export/bin
+	cp root/bin/dconf root/bin/gdbus root/bin/gnome-terminal export/bin
 	rm -rf export/share/aclocal  export/share/doc export/share/gir-1.0 export/share/gtk-doc export/share/locale export/share/man
 	rm -rf export/lib/*.a export/lib/*.la export/lib/gdk-pixbuf-2.0/2.10.0/loaders/*.a export/lib/gdk-pixbuf-2.0/2.10.0/loaders/*.la
 	rm -rf export/lib/*/*.a export/lib/pkgconfig  export/lib/gobject-introspection

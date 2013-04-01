@@ -1,0 +1,12 @@
+diff -up gnome-terminal-3.8.0.1/configure.broadway gnome-terminal-3.8.0.1/configure
+--- gnome-terminal-3.8.0.1/configure.broadway	2013-04-01 20:50:30.819507187 +0200
++++ gnome-terminal-3.8.0.1/configure	2013-04-01 20:50:59.699492140 +0200
+@@ -13022,7 +13022,7 @@ $as_echo "$GDK_TARGET" >&6; }
+ 
+ case "$GDK_TARGET" in
+   x11) PLATFORM_DEPS="x11" ;;
+-  win32|quartz) PLATFORM_DEPS="" ;;
++  win32|quartz|broadway) PLATFORM_DEPS="" ;;
+   *) as_fn_error $? "unknown gdk target" "$LINENO" 5 ;;
+ esac
+ 
