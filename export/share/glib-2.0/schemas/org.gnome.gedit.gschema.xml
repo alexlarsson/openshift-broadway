@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <enum id="org.gnome.gedit.WrapMode">
+    <value value="0" nick="none"/>
+    <value value="1" nick="char"/>
+    <value value="2" nick="word"/>
+    <value value="3" nick="word-char"/>
+  </enum>
+
+  <enum id="org.gnome.gedit.SmartHomeEnd">
+    <value value="0" nick="disabled"/>
+    <value value="1" nick="before"/>
+    <value value="2" nick="after"/>
+    <value value="3" nick="always"/>
+  </enum>
+
+  <schema path="/org/gnome/gedit/" id="org.gnome.gedit" gettext-domain="gedit">
+    <child schema="org.gnome.gedit.preferences" name="preferences"/>
+    <child schema="org.gnome.gedit.state" name="state"/>
+    <child schema="org.gnome.gedit.plugins" name="plugins"/>
+  </schema>
+  <schema path="/org/gnome/gedit/preferences/" id="org.gnome.gedit.preferences" gettext-domain="gedit">
+    <child schema="org.gnome.gedit.preferences.editor" name="editor"/>
+    <child schema="org.gnome.gedit.preferences.ui" name="ui"/>
+    <child schema="org.gnome.gedit.preferences.print" name="print"/>
+    <child schema="org.gnome.gedit.preferences.encodings" name="encodings"/>
+  </schema>
+  <schema path="/org/gnome/gedit/preferences/editor/" id="org.gnome.gedit.preferences.editor" gettext-domain="gedit">
+    <key type="b" name="use-default-font">
+      <default>true</default>
+      <summary>Use Default Font</summary>
+      <description>Whether to use the system's default fixed width font for editing text instead of a font specific to gedit. If this option is turned off, then the font named in the "Editor Font" option will be used instead of the system font.</description>
+    </key>
+    <key type="s" name="editor-font">
+      <default l10n="messages">'Monospace 12'</default>
+      <summary>Editor Font</summary>
+      <description>A custom font that will be used for the editing area. This will only take effect if the "Use Default Font" option is turned off.</description>
+    </key>
+    <key type="s" name="scheme">
+      <default>'classic'</default>
+      <summary>Style Scheme</summary>
+      <description>The ID of a GtkSourceView Style Scheme used to color the text.</description>
+    </key>
+    <key type="b" name="create-backup-copy">
+      <default>true</default>
+      <summary>Create Backup Copies</summary>
+      <description>Whether gedit should create backup copies for the files it saves. You can set the backup file extension with the "Backup Copy Extension" option.</description>
+    </key>
+    <key type="b" name="auto-save">
+      <default>false</default>
+      <summary>Autosave</summary>
+      <description>Whether gedit should automatically save modified files after a time interval. You can set the time interval with the "Autosave Interval" option.</description>
+    </key>
+    <key type="u" name="auto-save-interval">
+      <default>10</default>
+      <summary>Autosave Interval</summary>
+      <description>Number of minutes after which gedit will automatically save modified files. This will only take effect if the "Autosave" option is turned on.</description>
+    </key>
+    <key type="i" name="undo-actions-limit">
+      <default>25</default>
+      <summary>Undo Actions Limit (DEPRECATED)</summary>
+      <description>Maximum number of actions that gedit will be able to undo or redo. Use "-1" for unlimited number of actions. Deprecated since 2.12.0</description>
+    </key>
+    <key type="i" name="max-undo-actions">
+      <default>2000</default>
+      <summary>Maximum Number of Undo Actions</summary>
+      <description>Maximum number of actions that gedit will be able to undo or redo. Use "-1" for unlimited number of actions.</description>
+    </key>
+    <key name="wrap-mode" enum="org.gnome.gedit.WrapMode">
+      <aliases>
+        <alias value='GTK_WRAP_NONE' target='none'/>
+        <alias value='GTK_WRAP_WORD' target='word'/>
+        <alias value='GTK_WRAP_CHAR' target='char'/>
+      </aliases>
+      <default>'word'</default>
+      <summary>Line Wrapping Mode</summary>
+      <description>Specifies how to wrap long lines in the editing area. Use "none" for no wrapping, "word" for wrapping at word boundaries, and "char" for wrapping at individual character boundaries. Note that the values are case-sensitive, so make sure they appear exactly as mentioned here.</description>
+    </key>
+    <key type="u" name="tabs-size">
+      <default>8</default>
+      <summary>Tab Size</summary>
+      <description>Specifies the number of spaces that should be displayed instead of Tab characters.</description>
+    </key>
+    <key type="b" name="insert-spaces">
+      <default>false</default>
+      <summary>Insert spaces</summary>
+      <description>Whether gedit should insert spaces instead of tabs.</description>
+    </key>
+    <key type="b" name="auto-indent">
+      <default>false</default>
+      <summary>Automatic indent</summary>
+      <description>Whether gedit should enable automatic indentation.</description>
+    </key>
+    <key type="b" name="display-line-numbers">
+      <default>false</default>
+      <summary>Display Line Numbers</summary>
+      <description>Whether gedit should display line numbers in the editing area.</description>
+    </key>
+    <key type="b" name="highlight-current-line">
+      <default>false</default>
+      <summary>Highlight Current Line</summary>
+      <description>Whether gedit should highlight the current line.</description>
+    </key>
+    <key type="b" name="bracket-matching">
+      <default>false</default>
+      <summary>Highlight Matching Brackets</summary>
+      <description>Whether gedit should highlight matching brackets.</description>
+    </key>
+    <key type="b" name="display-right-margin">
+      <default>false</default>
+      <summary>Display Right Margin</summary>
+      <description>Whether gedit should display the right margin in the editing area.</description>
+    </key>
+    <key type="u" name="right-margin-position">
+      <default>80</default>
+      <summary>Right Margin Position</summary>
+      <description>Specifies the position of the right margin.</description>
+    </key>
+    <key name="smart-home-end" enum="org.gnome.gedit.SmartHomeEnd">
+      <aliases>
+        <alias value='DISABLED' target='disabled'/>
+        <alias value='BEFORE' target='before'/>
+        <alias value='AFTER' target='after'/>
+        <alias value='ALWAYS' target='always'/>
+      </aliases>
+      <default>'after'</default>
+      <summary>Smart Home End</summary>
+      <description>Specifies how the cursor moves when the HOME and END keys are pressed. Use "disabled" to always move at the start/end of the line, "after" to move to the start/end of the line the first time the keys are pressed and to the start/end of the text ignoring whitespaces the second time the keys are pressed, "before" to move to the start/end of the text before moving to the start/end of the line and "always" to always move to the start/end of the text instead of the start/end of the line.</description>
+    </key>
+    <key type="b" name="restore-cursor-position">
+      <default>true</default>
+      <summary>Restore Previous Cursor Position</summary>
+      <description>Whether gedit should restore the previous cursor position when a file is loaded.</description>
+    </key>
+    <key type="b" name="syntax-highlighting">
+      <default>true</default>
+      <summary>Enable Syntax Highlighting</summary>
+      <description>Whether gedit should enable syntax highlighting.</description>
+    </key>
+    <key type="b" name="search-highlighting">
+      <default>true</default>
+      <summary>Enable Search Highlighting</summary>
+      <description>Whether gedit should highlight all the occurrences of the searched text.</description>
+    </key>
+    <key type="b" name="ensure-trailing-newline">
+      <default>true</default>
+      <summary>Ensure Trailing Newline</summary>
+      <description>Whether gedit will ensure that documents always end with a trailing newline.</description>
+    </key>
+  </schema>
+  <schema path="/org/gnome/gedit/preferences/ui/" id="org.gnome.gedit.preferences.ui" gettext-domain="gedit">
+    <key type="b" name="toolbar-visible">
+      <default>true</default>
+      <summary>Toolbar is Visible</summary>
+      <description>Whether the toolbar should be visible in editing windows.</description>
+    </key>
+    <key name="notebook-show-tabs-mode" enum="org.gnome.gedit.GeditNotebookShowTabsModeType">
+      <default>'always'</default>
+      <summary>Notebook Show Tabs Mode</summary>
+      <description>Specifies when to show the notebook tabs. Use "never" to never show the tabs, "always" to always show the tabs, and "auto" to show the tabs only when there is more than one tab. Note that the values are case-sensitive, so make sure they appear exactly as mentioned here.</description>
+    </key>
+    <key type="b" name="statusbar-visible">
+      <default>true</default>
+      <summary>Status Bar is Visible</summary>
+      <description>Whether the status bar at the bottom of editing windows should be visible.</description>
+    </key>
+    <key type="b" name="side-panel-visible">
+      <default>false</default>
+      <summary>Side panel is Visible</summary>
+      <description>Whether the side panel at the left of editing windows should be visible.</description>
+    </key>
+    <key type="b" name="bottom-panel-visible">
+      <default>false</default>
+    </key>
+    <key type="u" name="max-recents">
+      <default>5</default>
+      <summary>Maximum Recent Files</summary>
+      <description>Specifies the maximum number of recently opened files that will be displayed in the "Recent Files" submenu.</description>
+    </key>
+  </schema>
+  <schema path="/org/gnome/gedit/preferences/print/" id="org.gnome.gedit.preferences.print" gettext-domain="gedit">
+    <key type="b" name="print-syntax-highlighting">
+      <default>true</default>
+      <summary>Print Syntax Highlighting</summary>
+      <description>Whether gedit should print syntax highlighting when printing documents.</description>
+    </key>
+    <key type="b" name="print-header">
+      <default>true</default>
+      <summary>Print Header</summary>
+      <description>Whether gedit should include a document header when printing documents.</description>
+    </key>
+    <key name="print-wrap-mode" enum="org.gnome.gedit.WrapMode">
+      <aliases>
+        <alias value='GTK_WRAP_NONE' target='none'/>
+        <alias value='GTK_WRAP_WORD' target='word'/>
+        <alias value='GTK_WRAP_CHAR' target='char'/>
+      </aliases>
+      <default>'word'</default>
+      <summary>Printing Line Wrapping Mode</summary>
+      <description>Specifies how to wrap long lines for printing. Use "none" for no wrapping, "word" for wrapping at word boundaries, and "char" for wrapping at individual character boundaries. Note that the values are case-sensitive, so make sure they appear exactly as mentioned here.</description>
+    </key>
+    <key type="u" name="print-line-numbers">
+      <default>0</default>
+      <summary>Print Line Numbers</summary>
+      <description>If this value is 0, then no line numbers will be inserted when printing a document. Otherwise, gedit will print line numbers every such number of lines.</description>
+    </key>
+    <key type="s" name="print-font-body-pango">
+      <default l10n="messages">'Monospace 9'</default>
+      <summary>Body Font for Printing</summary>
+      <description>Specifies the font to use for a document's body when printing documents.</description>
+    </key>
+    <key type="s" name="print-font-header-pango">
+      <default l10n="messages">'Sans 11'</default>
+      <summary>Header Font for Printing</summary>
+      <description>Specifies the font to use for page headers when printing a document. This will only take effect if the "Print Header" option is turned on.</description>
+    </key>
+    <key type="s" name="print-font-numbers-pango">
+      <default l10n="messages">'Sans 8'</default>
+      <summary>Line Number Font for Printing</summary>
+      <description>Specifies the font to use for line numbers when printing. This will only take effect if the "Print Line Numbers" option is non-zero.</description>
+    </key>
+  </schema>
+  <schema path="/org/gnome/gedit/preferences/encodings/" id="org.gnome.gedit.preferences.encodings" gettext-domain="gedit">
+    <key type="as" name="auto-detected">
+      
+      <default l10n="messages">['UTF-8', 'CURRENT', 'ISO-8859-15', 'UTF-16']</default>
+      <summary>Automatically Detected Encodings</summary>
+      <description>Sorted list of encodings used by gedit for automatically detecting the encoding of a file. "CURRENT" represents the current locale encoding. Only recognized encodings are used.</description>
+    </key>
+    <key type="as" name="shown-in-menu">
+      
+      <default l10n="messages">['ISO-8859-15']</default>
+      <summary>Encodings shown in menu</summary>
+      <description>List of encodings shown in the Character Encoding menu in open/save file selector. Only recognized encodings are used.</description>
+    </key>
+  </schema>
+  <schema path="/org/gnome/gedit/state/" id="org.gnome.gedit.state">
+    <child schema="org.gnome.gedit.state.window" name="window"/>
+    <child schema="org.gnome.gedit.state.file-filter" name="file-filter"/>
+    <child schema="org.gnome.gedit.state.history-entry" name="history-entry"/>
+  </schema>
+  <schema path="/org/gnome/gedit/state/window/" id="org.gnome.gedit.state.window">
+    <key type="i" name="state">
+      <default>0</default>
+    </key>
+    <key type="(ii)" name="size">
+      <default>(650, 500)</default>
+    </key>
+    <key type="i" name="side-panel-size">
+      <default>200</default>
+    </key>
+    <key type="i" name="side-panel-active-page">
+      <default>0</default>
+    </key>
+    <key type="i" name="bottom-panel-size">
+      <default>140</default>
+    </key>
+    <key type="i" name="bottom-panel-active-page">
+      <default>0</default>
+    </key>
+  </schema>
+  <schema path="/org/gnome/gedit/state/file-filter/" id="org.gnome.gedit.state.file-filter">
+    <key type="i" name="filter-id">
+      <default>0</default>
+    </key>
+  </schema>
+  <schema path="/org/gnome/gedit/state/history-entry/" id="org.gnome.gedit.state.history-entry">
+    <key type="as" name="search-for-entry">
+      <default>['']</default>
+    </key>
+    <key type="as" name="replace-with-entry">
+      <default>['']</default>
+    </key>
+  </schema>
+  <schema path="/org/gnome/gedit/plugins/" id="org.gnome.gedit.plugins" gettext-domain="gedit">
+    <key type="as" name="active-plugins">
+      <default>['docinfo', 'modelines', 'filebrowser', 'spell', 'time']</default>
+      <summary>Active plugins</summary>
+      <description>List of active plugins. It contains the "Location" of the active plugins. See the .gedit-plugin file for obtaining the "Location" of a given plugin.</description>
+    </key>
+  </schema>
+</schemalist>

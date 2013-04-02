@@ -103,8 +103,8 @@ typedef unsigned long guintptr;
 #define g_memmove(dest,src,len) G_STMT_START { memmove ((dest), (src), (len)); } G_STMT_END
 
 #define GLIB_MAJOR_VERSION 2
-#define GLIB_MINOR_VERSION 35
-#define GLIB_MICRO_VERSION 8
+#define GLIB_MINOR_VERSION 36
+#define GLIB_MICRO_VERSION 0
 
 #define G_OS_UNIX
 

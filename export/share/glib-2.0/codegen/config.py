@@ -23,5 +23,5 @@
 
 DATADIR = "${prefix}/share"
 DATADIR = DATADIR.replace(
-    "${prefix}", "/home/alex/broadway/root")
-VERSION = "2.35.8"
+    "${prefix}", "/home/alex/vcs/openshift-broadway/root")
+VERSION = "2.36.0"

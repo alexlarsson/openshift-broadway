@@ -58,6 +58,7 @@
     <name xml:lang="sv">Standardbakgrund</name>
     <name xml:lang="ta">முன்னிருப்பு பின்னணி</name>
     <name xml:lang="te">అప్రమేయ నేపథ్యం</name>
+    <name xml:lang="tg">Пасзаминаи пешфарз</name>
     <name xml:lang="th">ภาพพื้นหลังปริยาย</name>
     <name xml:lang="tr">Öntanımlı Ardalan</name>
     <name xml:lang="ug">كۆڭۈلدىكى تەگلىك</name>
@@ -67,7 +68,7 @@
     <name xml:lang="zh_CN">默认背景</name>
     <name xml:lang="zh_HK">預設背景</name>
     <name xml:lang="zh_TW">預設背景</name>
-    <filename>/home/alex/broadway/root/share/themes/Adwaita/backgrounds/adwaita-timed.xml</filename>
+    <filename>/home/alex/vcs/openshift-broadway/root/share/themes/Adwaita/backgrounds/adwaita-timed.xml</filename>
     <options>zoom</options>
     <shade_type>solid</shade_type>
     <pcolor>#3465a4</pcolor>

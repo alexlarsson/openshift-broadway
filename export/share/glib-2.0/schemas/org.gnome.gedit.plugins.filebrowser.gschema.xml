@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema path="/org/gnome/gedit/plugins/filebrowser/" id="org.gnome.gedit.plugins.filebrowser" gettext-domain="gedit">
+    <key type="b" name="tree-view">
+      <default>true</default>
+      <summary>Open With Tree View</summary>
+      <description>Open the tree view when the file browser plugin gets loaded instead of the bookmarks view</description>
+    </key>
+    <key type="s" name="root">
+      <default>''</default>
+      <summary>File Browser Root Directory</summary>
+      <description>The file browser root directory to use when loading the file browser plugin and onload/tree_view is TRUE.</description>
+    </key>
+    <key type="s" name="virtual-root">
+      <default>''</default>
+      <summary>File Browser Virtual Root Directory</summary>
+      <description>The file browser virtual root directory to use when loading the file browser plugin when onload/tree_view is TRUE. The virtual root must always be below the actual root.</description>
+    </key>
+    <key type="b" name="enable-remote">
+      <default>false</default>
+      <summary>Enable Restore of Remote Locations</summary>
+      <description>Sets whether to enable restoring of remote locations.</description>
+    </key>
+    <key type="b" name="open-at-first-doc">
+      <default>true</default>
+      <summary>Set Location to First Document</summary>
+      <description>If TRUE the file browser plugin will view the directory of the first opened document given that the file browser hasn't been used yet. (Thus this generally applies to opening a document from the command line or opening it with Nautilus, etc.)</description>
+    </key>
+    <key name="filter-mode" flags="org.gnome.gedit.plugins.filebrowser.GeditFileBrowserStoreFilterMode">
+      <default>['hide-hidden', 'hide-binary']</default>
+      <summary>File Browser Filter Mode</summary>
+      <description>This value determines what files get filtered from the file browser. Valid values are: none (filter nothing), hide-hidden (filter hidden files) and hide-binary (filter binary files).</description>
+    </key>
+    <key type="s" name="filter-pattern">
+      <default>''</default>
+      <summary>File Browser Filter Pattern</summary>
+      <description>The filter pattern to filter the file browser with. This filter works on top of the filter_mode.</description>
+    </key>
+  </schema>
+
+  <enum id="org.gnome.gedit.plugins.filebrowser.nautilus.ClickPolicy">
+    <value value="0" nick="single"/>
+    <value value="1" nick="double"/>
+  </enum>
+
+  <schema path="/org/gnome/gedit/plugins/filebrowser/nautilus/" id="org.gnome.gedit.plugins.filebrowser.nautilus">
+    <key name="click-policy" enum="org.gnome.gedit.plugins.filebrowser.nautilus.ClickPolicy">
+      <default>'double'</default>
+    </key>
+    <key type="b" name="enable-delete">
+      <default>false</default>
+    </key>
+    <key type="b" name="confirm-trash">
+      <default>true</default>
+    </key>
+  </schema>
+</schemalist>

@@ -1,0 +1,212 @@
+<its:rules
+    xmlns:its="http://www.w3.org/2005/11/its"
+    xmlns:itst="http://itstool.org/extensions/"
+    version="1.0">
+
+  <itst:match selector="/book"/>
+  <itst:match selector="/article"/>
+  <itst:match selector="/chapter"/>
+
+  <its:langRule selector="//*[namespace-uri(.) = '']" langPointer="@lang"/>
+
+  <itst:credits appendTo="/book/bookinfo | /article/articleinfo | /chapter/chapterinfo">
+    <othercredit class="translator">
+      <personname>
+        <firstname><itst:value-of select="name"/></firstname>
+      </personname>
+      <email><itst:value-of select="email"/></email>
+    </othercredit>
+    <copyright>
+      <itst:for-each select="years">
+        <year><itst:value-of select="year"/></year>
+      </itst:for-each>
+      <holder><itst:value-of select="name"/></holder>
+    </copyright>
+  </itst:credits>
+
+  <!-- Inline by default, might be overridden -->
+  <its:withinTextRule withinText="yes" selector="//abbrev"/>
+  <its:withinTextRule withinText="yes" selector="//accel"/>
+  <its:withinTextRule withinText="yes" selector="//acronym"/>
+  <its:withinTextRule withinText="yes" selector="//action"/>
+  <its:withinTextRule withinText="yes" selector="//affiliation"/>
+  <its:withinTextRule withinText="yes" selector="//anchor"/>
+  <its:withinTextRule withinText="yes" selector="//application"/>
+  <its:withinTextRule withinText="yes" selector="//arg"/>
+  <its:withinTextRule withinText="yes" selector="//authorinitials"/>
+  <its:withinTextRule withinText="yes" selector="//biblioref"/>
+  <its:withinTextRule withinText="yes" selector="//citation"/>
+  <its:withinTextRule withinText="yes" selector="//citebiblioid"/>
+  <its:withinTextRule withinText="yes" selector="//citerefentry"/>
+  <its:withinTextRule withinText="yes" selector="//citerefentry/manvolnum"/>
+  <its:withinTextRule withinText="yes" selector="//citerefentry/refentrytitle"/>
+  <its:withinTextRule withinText="yes" selector="//citetitle"/>
+  <its:withinTextRule withinText="yes" selector="//city"/>
+  <its:withinTextRule withinText="yes" selector="//classname"/>
+  <its:withinTextRule withinText="yes" selector="//co"/>
+  <its:withinTextRule withinText="yes" selector="//code"/>
+  <its:withinTextRule withinText="yes" selector="//col"/>
+  <its:withinTextRule withinText="yes" selector="//colgroup"/>
+  <its:withinTextRule withinText="yes" selector="//collabname"/>
+  <its:withinTextRule withinText="yes" selector="//command"/>
+  <its:withinTextRule withinText="yes" selector="//computeroutput"/>
+  <its:withinTextRule withinText="yes" selector="//constant"/>
+  <its:withinTextRule withinText="yes" selector="//constraint"/>
+  <its:withinTextRule withinText="yes" selector="//contrib"/>
+  <its:withinTextRule withinText="yes" selector="//country"/>
+  <its:withinTextRule withinText="yes" selector="//database"/>
+  <its:withinTextRule withinText="yes" selector="//date"/>
+  <its:withinTextRule withinText="yes" selector="//email"/>
+  <its:withinTextRule withinText="yes" selector="//emphasis"/>
+  <its:withinTextRule withinText="yes" selector="//envar"/>
+  <its:withinTextRule withinText="yes" selector="//errorcode"/>
+  <its:withinTextRule withinText="yes" selector="//errorname"/>
+  <its:withinTextRule withinText="yes" selector="//errortext"/>
+  <its:withinTextRule withinText="yes" selector="//errortype"/>
+  <its:withinTextRule withinText="yes" selector="//exceptionname"/>
+  <its:withinTextRule withinText="yes" selector="//fax"/>
+  <its:withinTextRule withinText="yes" selector="//filename"/>
+  <its:withinTextRule withinText="yes" selector="//firstname"/>
+  <its:withinTextRule withinText="yes" selector="//firstterm"/>
+  <its:withinTextRule withinText="yes" selector="//footnoteref"/>
+  <its:withinTextRule withinText="yes" selector="//foreignphrase"/>
+  <its:withinTextRule withinText="yes" selector="//funcdef"/>
+  <its:withinTextRule withinText="yes" selector="//funcparams"/>
+  <its:withinTextRule withinText="yes" selector="//function"/>
+  <its:withinTextRule withinText="yes" selector="//glossterm"/>
+  <its:withinTextRule withinText="yes" selector="//group"/>
+  <its:withinTextRule withinText="yes" selector="//guibutton"/>
+  <its:withinTextRule withinText="yes" selector="//guiicon"/>
+  <its:withinTextRule withinText="yes" selector="//guilabel"/>
+  <its:withinTextRule withinText="yes" selector="//guimenu"/>
+  <its:withinTextRule withinText="yes" selector="//guimenuitem"/>
+  <its:withinTextRule withinText="yes" selector="//guisubmenu"/>
+  <its:withinTextRule withinText="yes" selector="//hardware"/>
+  <its:withinTextRule withinText="yes" selector="//holder"/>
+  <its:withinTextRule withinText="yes" selector="//honorific"/>
+  <its:withinTextRule withinText="yes" selector="//imagedata"/>
+  <its:withinTextRule withinText="yes" selector="//imageobject"/>
+  <its:withinTextRule withinText="yes" selector="//imageobjectco"/>
+  <its:withinTextRule withinText="yes" selector="//initializer"/>
+  <its:withinTextRule withinText="yes" selector="//inlineequation"/>
+  <its:withinTextRule withinText="yes" selector="//inlinegraphic"/>
+  <its:withinTextRule withinText="yes" selector="//inlinemediaobject"/>
+  <its:withinTextRule withinText="yes" selector="//interface"/>
+  <its:withinTextRule withinText="yes" selector="//interfacename"/>
+  <its:withinTextRule withinText="yes" selector="//jobtitle"/>
+  <its:withinTextRule withinText="yes" selector="//keycap"/>
+  <its:withinTextRule withinText="yes" selector="//keycode"/>
+  <its:withinTextRule withinText="yes" selector="//keycombo"/>
+  <its:withinTextRule withinText="yes" selector="//keysym"/>
+  <its:withinTextRule withinText="yes" selector="//lhs"/>
+  <its:withinTextRule withinText="yes" selector="//lineage"/>
+  <its:withinTextRule withinText="yes" selector="//lineannotation"/>
+  <its:withinTextRule withinText="yes" selector="//link"/>
+  <its:withinTextRule withinText="yes" selector="//literal"/>
+  <its:withinTextRule withinText="yes" selector="//markup"/>
+  <its:withinTextRule withinText="yes" selector="//medialabel"/>
+  <its:withinTextRule withinText="yes" selector="//menuchoice"/>
+  <its:withinTextRule withinText="yes" selector="//methodname"/>
+  <its:withinTextRule withinText="yes" selector="//methodparam"/>
+  <its:withinTextRule withinText="yes" selector="//modifier"/>
+  <its:withinTextRule withinText="yes" selector="//mousebutton"/>
+  <its:withinTextRule withinText="yes" selector="//nonterminal"/>
+  <its:withinTextRule withinText="yes" selector="//olink"/>
+  <its:withinTextRule withinText="yes" selector="//ooclass"/>
+  <its:withinTextRule withinText="yes" selector="//ooexception"/>
+  <its:withinTextRule withinText="yes" selector="//oointerface"/>
+  <its:withinTextRule withinText="yes" selector="//option"/>
+  <its:withinTextRule withinText="yes" selector="//optional"/>
+  <its:withinTextRule withinText="yes" selector="//orgdiv"/>
+  <its:withinTextRule withinText="yes" selector="//orgname"/>
+  <its:withinTextRule withinText="yes" selector="//otheraddr"/>
+  <its:withinTextRule withinText="yes" selector="//othername"/>
+  <its:withinTextRule withinText="yes" selector="//package"/>
+  <its:withinTextRule withinText="yes" selector="//paramdef"/>
+  <its:withinTextRule withinText="yes" selector="//parameter"/>
+  <its:withinTextRule withinText="yes" selector="//personname"/>
+  <its:withinTextRule withinText="yes" selector="//phone"/>
+  <its:withinTextRule withinText="yes" selector="//phrase"/>
+  <its:withinTextRule withinText="yes" selector="//pob"/>
+  <its:withinTextRule withinText="yes" selector="//postcode"/>
+  <its:withinTextRule withinText="yes" selector="//productname"/>
+  <its:withinTextRule withinText="yes" selector="//productnumber"/>
+  <its:withinTextRule withinText="yes" selector="//prompt"/>
+  <its:withinTextRule withinText="yes" selector="//property"/>
+  <its:withinTextRule withinText="yes" selector="//quote"/>
+  <its:withinTextRule withinText="yes" selector="//replaceable"/>
+  <its:withinTextRule withinText="yes" selector="//returnvalue"/>
+  <its:withinTextRule withinText="yes" selector="//revnumber"/>
+  <its:withinTextRule withinText="yes" selector="//revremark"/>
+  <its:withinTextRule withinText="yes" selector="//rhs"/>
+  <its:withinTextRule withinText="yes" selector="//sbr"/>
+  <its:withinTextRule withinText="yes" selector="//sgmltag"/>
+  <its:withinTextRule withinText="yes" selector="//shortaffil"/>
+  <its:withinTextRule withinText="yes" selector="//shortcut"/>
+  <its:withinTextRule withinText="yes" selector="//state"/>
+  <its:withinTextRule withinText="yes" selector="//street"/>
+  <its:withinTextRule withinText="yes" selector="//structfield"/>
+  <its:withinTextRule withinText="yes" selector="//structname"/>
+  <its:withinTextRule withinText="yes" selector="//subscript"/>
+  <its:withinTextRule withinText="yes" selector="//superscript"/>
+  <its:withinTextRule withinText="yes" selector="//surname"/>
+  <its:withinTextRule withinText="yes" selector="//symbol"/>
+  <its:withinTextRule withinText="yes" selector="//systemitem"/>
+  <its:withinTextRule withinText="yes" selector="//termdef"/>
+  <its:withinTextRule withinText="yes" selector="//textobject"/>
+  <its:withinTextRule withinText="yes" selector="//token"/>
+  <its:withinTextRule withinText="yes" selector="//trademark"/>
+  <its:withinTextRule withinText="yes" selector="//trademark"/>
+  <its:withinTextRule withinText="yes" selector="//type"/>
+  <its:withinTextRule withinText="yes" selector="//ulink"/>
+  <its:withinTextRule withinText="yes" selector="//uri"/>
+  <its:withinTextRule withinText="yes" selector="//userinput"/>
+  <its:withinTextRule withinText="yes" selector="//varargs"/>
+  <its:withinTextRule withinText="yes" selector="//varname"/>
+  <its:withinTextRule withinText="yes" selector="//void"/>
+  <its:withinTextRule withinText="yes" selector="//wordasword"/>
+  <its:withinTextRule withinText="yes" selector="//xref"/>
+  <its:withinTextRule withinText="yes" selector="//year"/>
+
+  <!-- Mark footnotes nested, though itstool treats it as "no" -->
+  <its:withinTextRule withinText="nested" selector="//footnote"/>
+
+  <!-- Things with (semi-)structured content -->
+  <its:withinTextRule withinText="no" selector="//confgroup/*"/>
+  <its:withinTextRule withinText="no" selector="//biblioentry/*"/>
+  <its:withinTextRule withinText="no" selector="//biblioset/*"/>
+  <its:withinTextRule withinText="yes" selector="//bibliomixed/*"/>
+  <its:withinTextRule withinText="yes" selector="//bibliomset/*"/>
+  <its:withinTextRule withinText="no" selector="//glossentry/*"/>
+  <its:withinTextRule withinText="yes" selector="//indexterm//*"/>
+  <its:withinTextRule withinText="yes" selector="//simplelist[@type = 'inline']/descendant-or-self::*"/>
+
+  <!--
+  We want to break address off into a translation unit because it's
+  supposed to be space-preserving. But because of DocBook wonkiness,
+  address is often just used to provide an email address. In that
+  particular case, just ignore the fact that it's supposed to be a
+  space-preserving translation unit.
+  -->
+  <its:withinTextRule withinText="yes" selector="//address[count(*) = 1 and email]"/>
+  <itst:preserveSpaceRule preserveSpace="yes" selector="//address[not(count(*) = 1 and email)]"/>
+
+  <!-- These are always verbatim -->
+  <itst:preserveSpaceRule preserveSpace="yes" selector="//classsynopsisinfo"/>
+  <itst:preserveSpaceRule preserveSpace="yes" selector="//funcsynopsisinfo"/>
+  <itst:preserveSpaceRule preserveSpace="yes" selector="//literallayout"/>
+  <itst:preserveSpaceRule preserveSpace="yes" selector="//programlisting"/>
+  <itst:preserveSpaceRule preserveSpace="yes" selector="//screen"/>
+  <itst:preserveSpaceRule preserveSpace="yes" selector="//synopsis"/>
+
+  <!-- Don't translate editor remarks -->
+  <its:translateRule translate="no" selector="//remark/descendant-or-self::*"/>
+
+  <!-- External media files -->
+  <itst:externalRefRule selector="//audiodata" refPointer="@fileref"/>
+  <itst:externalRefRule selector="//imagedata" refPointer="@fileref"/>
+  <itst:externalRefRule selector="//videodata" refPointer="@fileref"/>
+
+  <!-- Some hacks -->
+  <its:translateRule translate="no" selector="//releaseinfo[@role = 'CVS' and normalize-space(.) = '$Id$']"/>
+</its:rules>

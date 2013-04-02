@@ -1,0 +1,42 @@
+<its:rules
+    xmlns:its="http://www.w3.org/2005/11/its"
+    xmlns:itst="http://itstool.org/extensions/"
+    xmlns:mal="http://projectmallard.org/1.0/"
+    version="1.0">
+
+  <itst:match selector="/mal:page"/>
+
+  <!-- Any extension on projectmallard.org will use xml:lang -->
+  <its:langRule selector="//*[starts-with(namespace-uri(.), 'http://projectmallard.org/')]"
+                langPointer="@xml:lang"/>
+
+  <itst:credits appendTo="/mal:page/mal:info">
+    <mal:credit type="translator copyright">
+      <mal:name><itst:value-of select="name"/></mal:name>
+      <mal:email><itst:value-of select="email"/></mal:email>
+      <mal:years><itst:value-of select="years"/></mal:years>
+    </mal:credit>
+  </itst:credits>
+
+  <its:withinTextRule withinText="yes" selector="//mal:cite//*"/>
+  <its:withinTextRule withinText="yes" selector="//mal:code//*"/>
+  <its:withinTextRule withinText="yes" selector="//mal:desc//*"/>
+  <its:withinTextRule withinText="yes" selector="//mal:email//*"/>
+  <its:withinTextRule withinText="yes" selector="//mal:link//*"/>
+  <its:withinTextRule withinText="yes" selector="//mal:name//*"/>
+  <its:withinTextRule withinText="yes" selector="//mal:p//*"/>
+  <its:withinTextRule withinText="yes" selector="//mal:screen//*"/>
+  <its:withinTextRule withinText="yes" selector="//mal:title//*"/>
+  <its:withinTextRule withinText="yes" selector="//mal:years//*"/>
+
+  <itst:preserveSpaceRule preserveSpace="yes" selector="//mal:code"/>
+  <itst:preserveSpaceRule preserveSpace="yes" selector="//mal:screen"/>
+
+  <its:translateRule translate="no" selector="//mal:comment/descendant-or-self::*"/>
+  <its:translateRule translate="no" selector="//mal:credit/mal:email"/>
+
+  <itst:externalRefRule selector="//mal:media" refPointer="@src"/>
+
+  <itst:contextRule selector="//mal:info/mal:title[@type]" contextPointer="@type"/>
+  <itst:contextRule selector="//mal:info/mal:title[@type and @role]" contextPointer="concat(@type, ':', @role)"/>
+</its:rules>

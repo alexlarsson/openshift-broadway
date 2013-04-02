@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=ca.desrt.dconf
+Exec=/tmp/broadway/libexec/dconf-service

@@ -1,0 +1,6 @@
+prefix=/home/alex/vcs/openshift-broadway/root
+
+Name: gsettings-desktop-schemas
+Description: Shared GSettings schemas for the desktop, including helper headers
+Version: 3.8.0
+Cflags: -I${prefix}/include/gsettings-desktop-schemas

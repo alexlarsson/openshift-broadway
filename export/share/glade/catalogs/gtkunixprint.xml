@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<glade-catalog name="unixprint" library="gladegtk" icon-prefix="gtk" domain="glade3" depends="gtk+" book="gtk">
+
+  <glade-widget-classes>
+    <glade-widget-class name="GtkPageSetupUnixDialog" generic-name="pagesetupdialog" title="Page Setup Dialog"></glade-widget-class>
+    <glade-widget-class name="GtkPrintUnixDialog" generic-name="printdialog" title="Print Dialog">
+      <properties>
+        <property id="manual-capabilities">
+  	  <displayable-values>
+	    <value id="GTK_PRINT_CAPABILITY_PAGE_SET" name="Page Set"></value>
+	    <value id="GTK_PRINT_CAPABILITY_COPIES" name="Copies"></value>
+	    <value id="GTK_PRINT_CAPABILITY_COLLATE" name="Collate"></value>
+	    <value id="GTK_PRINT_CAPABILITY_REVERSE" name="Reverse"></value>
+	    <value id="GTK_PRINT_CAPABILITY_SCALE" name="Scale"></value>
+	    <value id="GTK_PRINT_CAPABILITY_GENERATE_PDF" name="Generate PDF"></value>
+	    <value id="GTK_PRINT_CAPABILITY_GENERATE_PS" name="Generate PS"></value>
+	    <value id="GTK_PRINT_CAPABILITY_PREVIEW" name="Preview"></value>
+	    <value id="GTK_PRINT_CAPABILITY_NUMBER_UP" name="Number Up"></value>
+	    <value id="GTK_PRINT_CAPABILITY_NUMBER_UP_LAYOUT" name="Number Up Layout"></value>
+	  </displayable-values>
+	</property>
+      </properties>
+    </glade-widget-class>
+
+  </glade-widget-classes>
+  
+  <glade-widget-group name="unixprint-toplevels" title="GTK+ Unix Print Toplevels">
+    <glade-widget-class-ref name="GtkPageSetupUnixDialog"/>
+    <glade-widget-class-ref name="GtkPrintUnixDialog"/>
+  </glade-widget-group>
+
+</glade-catalog>

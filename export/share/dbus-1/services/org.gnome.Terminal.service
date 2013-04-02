@@ -1,0 +1,3 @@
+[D-BUS Service]
+Name=org.gnome.Terminal
+Exec=/tmp/broadway/libexec/gnome-terminal-server
