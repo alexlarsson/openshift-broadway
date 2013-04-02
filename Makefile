@@ -140,4 +140,6 @@ create-export:
 	cp fonts.conf export/etc/fonts/
 	mkdir -p export/etc/xdg/gtk-3.0
 	cp settings.ini export/etc/xdg/gtk-3.0/
+	mkdir -p export/etc/dbus-1
+	cp session.conf export/etc/dbus-1
 	sed -i "s#$(PREFIX)#/tmp/broadway#" export/share/dbus-1/services/*

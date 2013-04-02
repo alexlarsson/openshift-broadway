@@ -10,5 +10,5 @@ export FONTCONFIG_PATH="$BROADWAY_ROOT/etc/fonts"
 export XDG_CONFIG_HOME=$OPENSHIFT_HOMEDIR/diy-0.1/config
 ln -sf $BROADWAY_ROOT /tmp/broadway
 rm -f /tmp/dbus-addr
-dbus-daemon --session --print-address=6 --fork 6<>/tmp/dbus-addr
+dbus-daemon --config-file=$BROADWAY_ROOT/etc/dbus-1/session.conf --print-address=6 --fork 6<>/tmp/dbus-addr
 export DBUS_SESSION_BUS_ADDRESS=`cat /tmp/dbus-addr`
