@@ -9,4 +9,6 @@ export GTK_DATA_PREFIX="$BROADWAY_ROOT"
 export FONTCONFIG_PATH="$BROADWAY_ROOT/etc/fonts"
 export XDG_CONFIG_HOME=$OPENSHIFT_HOMEDIR/diy-0.1/config
 ln -sf $BROADWAY_ROOT /tmp/broadway
-eval `dbus-launch`
+rm -f /tmp/dbus-addr
+dbus-daemon --session --print-address=6 --fork 6<>/tmp/dbus-addr
+export DBUS_SESSION_BUS_ADDRESS=`cat /tmp/dbus-addr`
