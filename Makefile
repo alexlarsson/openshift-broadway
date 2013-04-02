@@ -47,7 +47,7 @@ empty-root:
 create-root: empty-root modules
 	true;
 
-modules: glib fontconfig pixman cairo gobject-introspection atk harfbuzz pango gdk-pixbuf gtk+ librsvg gnome-themes-standard gsettings-desktop-schemas dconf vte itstool gnome-terminal
+modules: glib fontconfig pixman cairo gobject-introspection atk harfbuzz pango gdk-pixbuf gtk+ librsvg gnome-themes-standard launcher gsettings-desktop-schemas dconf vte itstool gnome-terminal libpeas gtksourceview gedit glade
 	true
 
 glib: src/glib-2.36.0.tar.xz
@@ -87,7 +87,7 @@ librsvg: src/librsvg-2.37.0.tar.xz
 	$(call build_tarball,$<)
 
 gnome-themes-standard: src/gnome-themes-standard-3.8.0.tar.xz
-	$(call build_tarball,$<,--disable-gtk2-engine)
+	$(call build_tarball,$<,--disable-gtk2-engine,gnome-themes-standard.patch)
 
 gsettings-desktop-schemas: src/gsettings-desktop-schemas-3.8.0.tar.xz
 	$(call build_tarball,$<)
@@ -104,12 +104,28 @@ itstool: src/itstool-1.2.0.tar.bz2
 gnome-terminal: src/gnome-terminal-3.8.0.1.tar.xz
 	$(call build_tarball,$<,--disable-migration,gnome-terminal.patch)
 
+libpeas: src/libpeas-1.8.0.tar.xz
+	$(call build_tarball,$<)
+
+gtksourceview: src/gtksourceview-3.8.0.tar.xz
+	$(call build_tarball,$<)
+
+gedit: src/gedit-3.8.0.tar.xz
+	$(call build_tarball,$<,--disable-python --disable-spell,gedit.patch)
+
+glade: src/glade-3.15.0.tar.xz
+	$(call build_tarball,$<)
+
+launcher: launcher.c
+	gcc `pkg-config --cflags --libs gtk+-3.0` launcher.c -o launcher -O -Wall
+	cp launcher root/bin
+
 create-export:
 	rm -rf export
 	mkdir -p export/{bin,var}
 	cp -r root/etc root/lib root/share export
-	cp root/bin/broadwayd root/bin/gtk3-demo root/bin/gtk3-demo-application export/bin
-	cp root/bin/dconf root/bin/gdbus root/bin/gnome-terminal export/bin
+	cp root/bin/broadwayd root/bin/launcher root/bin/gtk3-demo root/bin/gtk3-demo-application export/bin
+	cp root/bin/dconf root/bin/gdbus root/bin/gedit root/bin/glade root/bin/gnome-terminal export/bin
 	rm -rf export/share/aclocal  export/share/doc export/share/gir-1.0 export/share/gtk-doc export/share/locale export/share/man
 	rm -rf export/lib/*.a export/lib/*.la export/lib/gdk-pixbuf-2.0/2.10.0/loaders/*.a export/lib/gdk-pixbuf-2.0/2.10.0/loaders/*.la
 	rm -rf export/lib/*/*.a export/lib/pkgconfig  export/lib/gobject-introspection

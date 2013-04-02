@@ -1,0 +1,14 @@
+diff -up gnome-themes-standard-3.8.0/themes/Adwaita/gtk-3.0/gtk-widgets.css.broadway gnome-themes-standard-3.8.0/themes/Adwaita/gtk-3.0/gtk-widgets.css
+--- gnome-themes-standard-3.8.0/themes/Adwaita/gtk-3.0/gtk-widgets.css.broadway	2013-04-02 11:40:55.935490267 +0200
++++ gnome-themes-standard-3.8.0/themes/Adwaita/gtk-3.0/gtk-widgets.css	2013-04-02 11:41:14.973498517 +0200
+@@ -40,8 +40,8 @@
+ 
+     -GtkWidget-focus-padding: 2;
+     -GtkWidget-focus-line-width: 1;
+-    -GtkWindow-resize-grip-width: 0;
+-    -GtkWindow-resize-grip-height: 0;   
++    -GtkWindow-resize-grip-width: 16;
++    -GtkWindow-resize-grip-height: 16;   
+ 
+     /* We use the outline properties to signal the focus properties
+      * to the adwaita engine: using real CSS properties is faster,

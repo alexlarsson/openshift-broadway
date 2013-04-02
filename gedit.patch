@@ -1,0 +1,61 @@
+diff -up gedit-3.8.0/configure.broadway gedit-3.8.0/configure
+--- gedit-3.8.0/configure.broadway	2013-04-01 21:58:15.006372040 +0200
++++ gedit-3.8.0/configure	2013-04-01 21:59:32.925486913 +0200
+@@ -4890,7 +4890,7 @@ $as_echo_n "checking whether $PYTHON ver
+ # split strings by '.' and convert to numeric.  Append some zeros
+ # because we need at least 4 digits for the hex conversion.
+ # map returns an iterator in Python 3.0 and a list in 2.x
+-minver = list(map(int, '3.2.3'.split('.'))) + [0, 0, 0]
++minver = list(map(int, '2.6.6'.split('.'))) + [0, 0, 0]
+ minverhex = 0
+ # xrange is not present in Python 3.0 and range returns an iterator
+ for i in list(range(0, 4)): minverhex = (minverhex << 8) + minver[i]
+@@ -4923,7 +4923,7 @@ else
+ # split strings by '.' and convert to numeric.  Append some zeros
+ # because we need at least 4 digits for the hex conversion.
+ # map returns an iterator in Python 3.0 and a list in 2.x
+-minver = list(map(int, '3.2.3'.split('.'))) + [0, 0, 0]
++minver = list(map(int, '2.6.6'.split('.'))) + [0, 0, 0]
+ minverhex = 0
+ # xrange is not present in Python 3.0 and range returns an iterator
+ for i in list(range(0, 4)): minverhex = (minverhex << 8) + minver[i]
+diff -up gedit-3.8.0/configure.broadway gedit-3.8.0/configure
+--- gedit-3.8.0/configure.broadway	2013-04-01 22:05:38.066368270 +0200
++++ gedit-3.8.0/configure	2013-04-01 22:08:07.319238043 +0200
+@@ -16712,7 +16712,7 @@ $as_echo "yes" >&6; }
+ 
+ fi
+ 
+-if test "$os_osx" = "no" &&
++if test "$os_osx" = "disable" &&
+    test "$os_win32" = "no"; then
+ 
+ pkg_failed=no
+diff -up gedit-3.8.0/gedit/gedit-app-x11.c.broadway gedit-3.8.0/gedit/gedit-app-x11.c
+--- gedit-3.8.0/gedit/gedit-app-x11.c.broadway	2013-04-01 22:12:38.576614649 +0200
++++ gedit-3.8.0/gedit/gedit-app-x11.c	2013-04-01 22:13:21.433241200 +0200
+@@ -34,8 +34,6 @@ gedit_app_x11_finalize (GObject *object)
+ 
+ /* This should go in GtkApplication at some point... */
+ 
+-#include <X11/Xatom.h>
+-#include <X11/Xlib.h>
+ 
+ static void
+ gedit_app_add_platform_data (GApplication    *app,
+@@ -69,6 +67,7 @@ gedit_app_add_platform_data (GApplicatio
+    * "_NET_WM_USER_TIME_WINDOW" one since that's what we're doing
+    * here...
+    */
++#if 0
+   if (!g_getenv ("DESKTOP_STARTUP_ID") && g_getenv ("DISPLAY"))
+     {
+       gchar *startup_id;
+@@ -90,6 +89,7 @@ gedit_app_add_platform_data (GApplicatio
+       g_variant_builder_add (builder, "{sv}", "desktop-startup-id", g_variant_new_string (startup_id));
+       g_free (startup_id);
+     }
++#endif
+ }
+ 
+ static void
