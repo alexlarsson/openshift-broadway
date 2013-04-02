@@ -7,3 +7,4 @@ export GI_TYPELIB_PATH="$BROADWAY_ROOT/lib/girepository-1.0:/usr/lib/girepositor
 export GTK_EXE_PREFIX="$BROADWAY_ROOT"
 export GTK_DATA_PREFIX="$BROADWAY_ROOT"
 export FONTCONFIG_PATH="$BROADWAY_ROOT/etc/fonts"
+eval `dbus-launch`
