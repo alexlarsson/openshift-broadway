@@ -122,9 +122,10 @@ launcher: launcher.c
 
 create-export:
 	rm -rf export
-	mkdir -p export/{bin,var}
+	mkdir -p export/{bin,var,libexec}
 	cp -r root/etc root/lib root/share export
 	cp root/bin/broadwayd root/bin/launcher root/bin/gtk3-demo root/bin/gtk3-demo-application export/bin
+	cp root/libexec/gnome-terminal-server root/libexec/gnome-pty-helper root/libexec/dconf-service export/libexec
 	cp root/bin/dconf root/bin/gdbus root/bin/gedit root/bin/glade root/bin/gnome-terminal export/bin
 	rm -rf export/share/aclocal  export/share/doc export/share/gir-1.0 export/share/gtk-doc export/share/locale export/share/man
 	rm -rf export/lib/*.a export/lib/*.la export/lib/gdk-pixbuf-2.0/2.10.0/loaders/*.a export/lib/gdk-pixbuf-2.0/2.10.0/loaders/*.la
@@ -135,3 +136,4 @@ create-export:
 	cp fonts.conf export/etc/fonts/
 	mkdir -p export/etc/xdg/gtk-3.0
 	cp settings.ini export/etc/xdg/gtk-3.0/
+	sed -i "s#$(PREFIX)#/tmp/broadway#" export/share/dbus-1/services/*
