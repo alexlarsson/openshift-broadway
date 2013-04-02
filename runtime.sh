@@ -7,5 +7,6 @@ export GI_TYPELIB_PATH="$BROADWAY_ROOT/lib/girepository-1.0:/usr/lib/girepositor
 export GTK_EXE_PREFIX="$BROADWAY_ROOT"
 export GTK_DATA_PREFIX="$BROADWAY_ROOT"
 export FONTCONFIG_PATH="$BROADWAY_ROOT/etc/fonts"
+export XDG_CONFIG_HOME=$OPENSHIFT_HOMEDIR/diy-0.1/config
 ln -sf $BROADWAY_ROOT /tmp/broadway
 eval `dbus-launch`
