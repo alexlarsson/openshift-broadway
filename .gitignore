@@ -2,6 +2,6 @@ src/*.tar.xz
 src/*.tar.bz2
 src/*.tar.gz
 *~
-root
-build
-launcher
+/root
+/build
+/launcher
