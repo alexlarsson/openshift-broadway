@@ -131,8 +131,12 @@ create-export:
 	rm -rf export/lib/*.a export/lib/*.la export/lib/gdk-pixbuf-2.0/2.10.0/loaders/*.a export/lib/gdk-pixbuf-2.0/2.10.0/loaders/*.la
 	rm -rf export/lib/*/*.a export/lib/pkgconfig  export/lib/gobject-introspection
 	rm -rf export/share/icons/HighContrast
+	rm -rf export/share/help
 	strip export/lib/*.so*
+	strip export/lib/*/*.so*
+	strip export/lib/*/*/*.so*
 	strip export/bin/*
+	ln -s gedit/libgedit-private.so export/lib/
 	cp fonts.conf export/etc/fonts/
 	mkdir -p export/etc/xdg/gtk-3.0
 	cp settings.ini export/etc/xdg/gtk-3.0/
