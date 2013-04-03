@@ -1234,3 +1234,52 @@ index f540c51..c4d1b21 100644
  };
  
  struct _GdkWindowImplBroadwayClass
+diff --git a/gdk/broadway/gdkbroadway-server.c b/gdk/broadway/gdkbroadway-server.c
+index cb9bdf4..f5df46a 100644
+--- a/gdk/broadway/gdkbroadway-server.c
++++ b/gdk/broadway/gdkbroadway-server.c
+@@ -506,7 +506,7 @@ make_valid_fs_char (char c)
+ {
+   char chars[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890";
+ 
+-  return chars[c % sizeof (chars)];
++  return chars[c % (sizeof (chars) - 1)];
+ }
+ 
+ /* name must have at least space for 34 bytes */
+@@ -582,6 +582,13 @@ _gdk_broadway_server_create_surface (int                 width,
+   res = ftruncate (fd, data->data_size);
+   g_assert (res != -1);
+ 
++  res = posix_fallocate (fd, 0, data->data_size);
++  if (res != 0)
++    {
++      shm_unlink (data->name);
++      g_error ("Not enough shared memory for window surface");
++    }
++
+   data->data = mmap(0, data->data_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0); 
+   (void) close(fd);
+ 
+diff --git a/gdk/broadway/gdkwindow-broadway.c b/gdk/broadway/gdkwindow-broadway.c
+index d59fcb7..e8a6ec3 100644
+--- a/gdk/broadway/gdkwindow-broadway.c
++++ b/gdk/broadway/gdkwindow-broadway.c
+@@ -271,16 +271,13 @@ void
+ _gdk_broadway_window_resize_surface (GdkWindow *window)
+ {
+   GdkWindowImplBroadway *impl = GDK_WINDOW_IMPL_BROADWAY (window->impl);
+-  cairo_surface_t *old;
+ 
+   if (impl->surface)
+     {
+-      old = impl->surface;
++      cairo_surface_destroy (impl->surface);
+ 
+       impl->surface = _gdk_broadway_server_create_surface (gdk_window_get_width (impl->wrapper),
+ 							   gdk_window_get_height (impl->wrapper));
+-
+-      cairo_surface_destroy (old);
+     }
+ 
+   if (impl->ref_surface)
