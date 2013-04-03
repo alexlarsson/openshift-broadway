@@ -7,7 +7,9 @@ export GI_TYPELIB_PATH="$BROADWAY_ROOT/lib/girepository-1.0:/usr/lib/girepositor
 export GTK_EXE_PREFIX="$BROADWAY_ROOT"
 export GTK_DATA_PREFIX="$BROADWAY_ROOT"
 export FONTCONFIG_PATH="$BROADWAY_ROOT/etc/fonts"
-export XDG_CONFIG_HOME=$OPENSHIFT_HOMEDIR/diy-0.1/config
+export XDG_CONFIG_HOME=$OPENSHIFT_DATA_DIR/config
+export XDG_DATA_HOME=$OPENSHIFT_DATA_DIR/share
+export XDG_CACHE_HOME=$OPENSHIFT_DATA_DIR/cache
 ln -sf $BROADWAY_ROOT /tmp/broadway
 rm -f /tmp/dbus-addr
 dbus-daemon --config-file=$BROADWAY_ROOT/etc/dbus-1/session.conf --print-address=6 --fork 6<>/tmp/dbus-addr
